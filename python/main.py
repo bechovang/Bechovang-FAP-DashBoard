@@ -37,7 +37,7 @@ def save_to_json(data, filename):
 def get_config():
     """Đọc thông tin cấu hình từ file config.ini."""
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read('config.ini', encoding='utf-8')
     return config['FAP_CREDENTIALS']
 
 
