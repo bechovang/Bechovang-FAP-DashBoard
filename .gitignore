@@ -1,0 +1,59 @@
+# --- Configuration File (QUAN TRỌNG!) ---
+# Không bao giờ đưa file chứa thông tin nhạy cảm như mật khẩu lên Git.
+config.ini
+
+# --- Generated Data Files ---
+# Các file JSON được tạo ra bởi script không phải là code nguồn.
+# Chúng sẽ thay đổi mỗi khi script chạy.
+*.json
+
+# --- Python Virtual Environment ---
+# Thư mục môi trường ảo có thể rất lớn và không cần thiết phải đưa lên Git.
+# Nó có thể được tạo lại từ file requirements.txt.
+/venv/
+/env/
+/.venv/
+/ENV/
+/env.bak/
+/venv.bak/
+/__pypackages__/
+
+# --- Python Cache & Compiled Files ---
+# Các file này được Python tự động tạo ra để tăng tốc độ.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# --- IDE and Editor Configuration ---
+# Cấu hình riêng của mỗi người cho trình soạn thảo code.
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- Log Files ---
+# Các file log được tạo ra trong quá trình chạy hoặc debug.
+*.log
+logs/
+
+# --- Selenium / WebDriver Logs ---
+geckodriver.log
+chromedriver.log
+
+# --- Distribution / Packaging ---
+# Các file và thư mục được tạo ra khi bạn đóng gói ứng dụng.
+/build/
+/dist/
+/downloads/
+/eggs/
+*.egg-info/
+/sdist/
+/wheel/
+*.egg
+*.spec
+
+# --- Operating System Files ---
+.DS_Store
+Thumbs.db
