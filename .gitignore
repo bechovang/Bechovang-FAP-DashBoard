@@ -57,3 +57,77 @@ chromedriver.log
 # --- Operating System Files ---
 .DS_Store
 Thumbs.db
+
+
+
+# ===================================================================
+# 1. QUY TẮC CHUNG CHO CÁC DỰ ÁN NODE.JS
+# ===================================================================
+
+# Bỏ qua tất cả các thư mục node_modules trong toàn bộ project.
+# Đây là quy tắc quan trọng nhất.
+**/node_modules
+
+# Các file log sinh ra trong quá trình phát triển hoặc lỗi.
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Các file chứa biến môi trường.
+# TUYỆT ĐỐI KHÔNG commit file chứa thông tin nhạy cảm.
+# Thay vào đó, hãy tạo file .env.example để người khác biết cần tạo biến gì.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Các báo cáo kiểm thử (test coverage).
+coverage
+.nyc_output
+
+# ===================================================================
+# 2. CÁC FILE & THƯ MỤC BUILD CỤ THỂ
+# ===================================================================
+
+# Thư mục build của Extension (Vite)
+/extension/dist
+
+# Thư mục cache của Vite
+/extension/.vite
+
+# Thư mục build của Web App (Next.js)
+/webapp/.next
+
+# Thư mục xuất tĩnh của Web App (Next.js)
+/webapp/out
+
+# File định nghĩa kiểu tự động sinh ra bởi Next.js
+/webapp/next-env.d.ts
+
+# ===================================================================
+# 3. CÁC FILE CỦA HỆ ĐIỀU HÀNH VÀ IDE
+# ===================================================================
+
+# Các file hệ thống của macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Các file hệ thống của Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+
+# Thư mục cấu hình của các IDE/Editor
+# (Cho phép team chia sẻ các file cài đặt chung nếu cần)
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
