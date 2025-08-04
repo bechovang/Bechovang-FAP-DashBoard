@@ -1,6 +1,6 @@
-bạn giúp tôi cho tôi plan chi tiết của project này, cho tôi ý tưởng, hướng dẫn chi tiết, không đưa code.
+bạn giúp tôi cho tôi plan chi tiết về phần extendsion cào dữ liệu của project này vì web tôi định dùng v0 dev tạo và nhúng vào extension, cho tôi ý tưởng, hướng dẫn chi tiết, không đưa code.
 
-tôi định dùng python để auto đăng nhập và cào dữ liệu thành file json và code web để hiển thị nội dung : xem lịch đi học, lịch thi, ngày thi, ngày có điểm, xem điểm, tính đậu pass, điểm thi cuối kỳ dự kiến để đạt aim, đậu pass, số buổi nghỉ, ... (bạn đề xuất tôi thêm) . bạn đề xuất tôi thiết kế web sao cho đẹp, UI UX xịn , v.v nữa
+tôi định dùng extension typescript để auto đăng nhập và cào dữ liệu thành file json và code web để hiển thị nội dung : xem lịch đi học, lịch thi, ngày thi, ngày có điểm, xem điểm, tính đậu pass, điểm thi cuối kỳ dự kiến để đạt aim, đậu pass, số buổi nghỉ, ... (bạn đề xuất tôi thêm) . bạn đề xuất tôi thiết kế web sao cho đẹp, UI UX xịn , v.v nữa
 
 
 đây là source code và hình ảnh của web tôi định cào
