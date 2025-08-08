@@ -24,16 +24,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Phản hồi ngay lập tức cho popup biết là đã nhận lệnh
         sendResponse({ status: 'Đã nhận lệnh, đang xử lý...' });
     } else if (message.action === 'downloadJson') {
-        // Xử lý yêu cầu tải file
+        console.log("== DOWNLOAD FLOW: Nhận được yêu cầu tải file."); // Log 1
+        
         chrome.storage.local.get('scrapedData', (result) => {
-            const data = result.scrapedData;
-            if (data) {
-                const dataStr = "data:text/json;charset=utf-t," + encodeURIComponent(JSON.stringify(data, null, 2));
-                chrome.downloads.download({
-                    url: dataStr,
-                    filename: 'fap_data.json',
-                    saveAs: true
-                });
+            console.log("== DOWNLOAD FLOW: Dữ liệu lấy từ storage:", result); // Log 2
+            
+            if (result && result.scrapedData) {
+                const data = result.scrapedData;
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                
+                console.log("== DOWNLOAD FLOW: Chuẩn bị tải xuống file."); // Log 3
+                
+                try {
+                    chrome.downloads.download({
+                        url: dataStr,
+                        filename: 'fap_data.json',
+                        saveAs: true
+                    }, (downloadId) => {
+                        if (chrome.runtime.lastError) {
+                            console.error("== DOWNLOAD FLOW: Lỗi khi tải file:", chrome.runtime.lastError);
+                        } else {
+                            console.log("== DOWNLOAD FLOW: Tải file thành công, downloadId:", downloadId);
+                        }
+                    });
+                } catch (error) {
+                    console.error("== DOWNLOAD FLOW: Lỗi khi gọi chrome.downloads.download:", error);
+                }
+            } else {
+                console.error("== DOWNLOAD FLOW: Không tìm thấy 'scrapedData' trong storage."); // Log lỗi
             }
         });
     }
@@ -91,7 +109,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Lưu dữ liệu vào storage
         chrome.storage.local.set({ scrapedData: finalJson }, () => {
-            console.log('Dữ liệu đã được lưu vào chrome.storage.local');
+            console.log('== SAVE FLOW: Dữ liệu đã được LƯU THÀNH CÔNG vào storage.'); // Thêm log xác nhận
             // Gửi thông báo hoàn tất tới popup
             chrome.runtime.sendMessage({ action: 'scrapingComplete' });
         });
