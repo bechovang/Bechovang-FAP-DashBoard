@@ -4,6 +4,14 @@ const downloadAllBtn = document.getElementById('downloadAllBtn') as HTMLButtonEl
 const downloadProfileBtn = document.getElementById('downloadProfileBtn') as HTMLButtonElement;
 const downloadExamBtn = document.getElementById('downloadExamBtn') as HTMLButtonElement;
 const downloadCurriculumBtn = document.getElementById('downloadCurriculumBtn') as HTMLButtonElement;
+
+// HTML scraping buttons
+const scrapeWeeklyScheduleBtn = document.getElementById('scrapeWeeklyScheduleBtn') as HTMLButtonElement;
+const scrapeExamScheduleBtn = document.getElementById('scrapeExamScheduleBtn') as HTMLButtonElement;
+const scrapeGradesBtn = document.getElementById('scrapeGradesBtn') as HTMLButtonElement;
+const scrapeAttendanceBtn = document.getElementById('scrapeAttendanceBtn') as HTMLButtonElement;
+const scrapeCurrentPageBtn = document.getElementById('scrapeCurrentPageBtn') as HTMLButtonElement;
+
 const statusDiv = document.getElementById('status') as HTMLParagraphElement;
 
 // Gửi yêu cầu cào dữ liệu khi nhấn nút
@@ -42,6 +50,32 @@ downloadCurriculumBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'downloadCurriculum' });
 });
 
+// HTML scraping event listeners
+scrapeWeeklyScheduleBtn.addEventListener('click', () => {
+    statusDiv.textContent = 'Đang mở trang lịch tuần...';
+    chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'weekly-schedule' });
+});
+
+scrapeExamScheduleBtn.addEventListener('click', () => {
+    statusDiv.textContent = 'Đang mở trang lịch thi...';
+    chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'exam-schedule' });
+});
+
+scrapeGradesBtn.addEventListener('click', () => {
+    statusDiv.textContent = 'Đang mở trang điểm...';
+    chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'student-grades' });
+});
+
+scrapeAttendanceBtn.addEventListener('click', () => {
+    statusDiv.textContent = 'Đang mở trang điểm danh...';
+    chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'attendance-report' });
+});
+
+scrapeCurrentPageBtn.addEventListener('click', () => {
+    statusDiv.textContent = 'Đang cào trang hiện tại...';
+    chrome.runtime.sendMessage({ action: 'scrapeCurrentPage' });
+});
+
 // Lắng nghe thông điệp cập nhật trạng thái từ background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'updateStatus') {
@@ -54,5 +88,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         downloadExamBtn.disabled = false;
         downloadCurriculumBtn.disabled = false;
         scrapeBtn.disabled = false;  // Cho phép cào lại
+    } else if (message.action === 'htmlScrapingComplete') {
+        statusDiv.textContent = `Đã cào HTML thành công! File: ${message.fileName}`;
+    } else if (message.action === 'htmlScrapingError') {
+        statusDiv.textContent = `Lỗi cào HTML: ${message.error}`;
     }
 });

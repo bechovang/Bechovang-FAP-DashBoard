@@ -95,6 +95,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else if (message.action === 'downloadProfile') {
         console.log("== DOWNLOAD FLOW: Nhận được yêu cầu tải dữ liệu profile.");
         downloadData('profile', 'fap_profile.json');
+    } else if (message.action === 'scrapeHTMLPage') {
+        // Xử lý yêu cầu cào HTML từ popup
+        console.log(`Nhận được yêu cầu cào HTML trang: ${message.pageType}`);
+        scrapeHTMLPage(message.pageType);
+        sendResponse({ status: 'Đang mở trang để cào HTML...' });
+    } else if (message.action === 'scrapeCurrentPage') {
+        // Cào HTML trang hiện tại
+        console.log('Nhận được yêu cầu cào HTML trang hiện tại');
+        scrapeCurrentPageHTML();
+        sendResponse({ status: 'Đang cào HTML trang hiện tại...' });
     }
     
     // Trả về true để giữ kênh liên lạc mở cho các phản hồi bất đồng bộ (nếu cần)
@@ -265,6 +275,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         
         // Kiểm tra xem đã có đủ dữ liệu chưa
         checkAndSaveAllData();
+    } else if (message.action === 'scrapedHTMLData') {
+        // Xử lý dữ liệu HTML đã cào từ content script
+        const htmlData = message.data;
+        console.log("Đã nhận dữ liệu HTML từ content script:", htmlData.fileName);
+        
+        updatePopupStatus('Đang tải file HTML...');
+        
+        // Tải file HTML
+        downloadHTMLFile(htmlData.content, htmlData.fileName);
     }
 });
 
@@ -291,6 +310,135 @@ function checkAndSaveAllData() {
             
             // Gửi thông báo hoàn tất tới popup
             chrome.runtime.sendMessage({ action: 'scrapingComplete' });
+        });
+    }
+}
+
+// Hàm cào HTML từ các trang cụ thể
+async function scrapeHTMLPage(pageType: string) {
+    try {
+        let targetUrl = '';
+        
+        // Xác định URL dựa trên loại trang
+        switch (pageType) {
+            case 'weekly-schedule':
+                targetUrl = 'https://fap.fpt.edu.vn/Report/ScheduleOfWeek.aspx';
+                break;
+            case 'exam-schedule':
+                targetUrl = 'https://fap.fpt.edu.vn/Exam/ScheduleExams.aspx';
+                break;
+            case 'student-grades':
+                targetUrl = 'https://fap.fpt.edu.vn/Grade/StudentGrade.aspx';
+                break;
+            case 'attendance-report':
+                targetUrl = 'https://fap.fpt.edu.vn/Report/ViewAttendstudent.aspx';
+                break;
+            default:
+                throw new Error(`Loại trang không được hỗ trợ: ${pageType}`);
+        }
+        
+        updatePopupStatus(`Đang mở trang ${pageType}...`);
+        
+        // Tạo tab mới để thực hiện việc cào HTML
+        const tab = await chrome.tabs.create({ url: targetUrl, active: false });
+        
+        if (tab.id) {
+            // Lắng nghe sự kiện tab được cập nhật hoàn toàn
+            chrome.tabs.onUpdated.addListener(async function listener(tabId, info) {
+                if (tabId === tab.id && info.status === 'complete') {
+                    // Gỡ bỏ listener để tránh chạy nhiều lần
+                    chrome.tabs.onUpdated.removeListener(listener);
+
+                    updatePopupStatus(`Đang cào HTML từ ${pageType}...`);
+                    
+                    // Tiêm content script HTML scraper vào trang
+                    await injectAndExecuteScript(tab.id, 'content-scripts/html-scraper.js');
+                    
+                    // Đóng tab sau 5 giây (để đảm bảo scraping hoàn tất)
+                    setTimeout(async () => {
+                        try {
+                            if (tab.id) {
+                                await chrome.tabs.remove(tab.id);
+                            }
+                        } catch (error) {
+                            console.log('Tab có thể đã được đóng trước đó');
+                        }
+                    }, 5000);
+                }
+            });
+        }
+    } catch (error) {
+        console.error(`Lỗi trong quá trình cào HTML ${pageType}:`, error);
+        updatePopupStatus(`Lỗi: ${(error as Error).message}`);
+        chrome.runtime.sendMessage({ 
+            action: 'htmlScrapingError', 
+            error: (error as Error).message 
+        });
+    }
+}
+
+// Hàm cào HTML từ trang hiện tại
+async function scrapeCurrentPageHTML() {
+    try {
+        // Lấy tab hiện tại
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const currentTab = tabs[0];
+        
+        if (!currentTab || !currentTab.id) {
+            throw new Error('Không thể tìm thấy tab hiện tại');
+        }
+        
+        // Kiểm tra xem tab có phải là trang FAP không
+        if (!currentTab.url || !currentTab.url.includes('fap.fpt.edu.vn')) {
+            throw new Error('Tab hiện tại không phải là trang FAP');
+        }
+        
+        updatePopupStatus('Đang cào HTML từ trang hiện tại...');
+        
+        // Tiêm content script HTML scraper vào tab hiện tại
+        await injectAndExecuteScript(currentTab.id, 'content-scripts/html-scraper.js');
+        
+    } catch (error) {
+        console.error('Lỗi trong quá trình cào HTML trang hiện tại:', error);
+        updatePopupStatus(`Lỗi: ${(error as Error).message}`);
+        chrome.runtime.sendMessage({ 
+            action: 'htmlScrapingError', 
+            error: (error as Error).message 
+        });
+    }
+}
+
+// Hàm tải file HTML
+function downloadHTMLFile(content: string, fileName: string) {
+    const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(content);
+    
+    console.log("== HTML DOWNLOAD FLOW: Chuẩn bị tải xuống file HTML:", fileName);
+    
+    try {
+        chrome.downloads.download({
+            url: dataStr,
+            filename: fileName,
+            saveAs: true
+        }, (downloadId) => {
+            if (chrome.runtime.lastError) {
+                console.error("== HTML DOWNLOAD FLOW: Lỗi khi tải file:", chrome.runtime.lastError);
+                chrome.runtime.sendMessage({ 
+                    action: 'htmlScrapingError', 
+                    error: chrome.runtime.lastError.message 
+                });
+            } else {
+                console.log("== HTML DOWNLOAD FLOW: Tải file thành công, downloadId:", downloadId);
+                chrome.runtime.sendMessage({ 
+                    action: 'htmlScrapingComplete', 
+                    fileName: fileName 
+                });
+            }
+        });
+    } catch (error) {
+        console.error("== HTML DOWNLOAD FLOW: Lỗi khi gọi chrome.downloads.download:", error);
+        chrome.runtime.sendMessage({ 
+            action: 'htmlScrapingError', 
+            error: (error as Error).message 
         });
     }
 }

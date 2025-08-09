@@ -5,24 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAP Helper</title>
     <style>
-        body { font-family: sans-serif; width: 300px; padding: 10px; text-align: center; }
-        button { width: 100%; padding: 8px; font-size: 14px; cursor: pointer; margin-bottom: 5px; }
-        #scrapeBtn { background-color: #007bff; color: white; border: none; border-radius: 5px; }
-        .download-btn { background-color: #28a745; color: white; border: none; border-radius: 5px; }
+        body { font-family: sans-serif; width: 320px; padding: 10px; text-align: center; }
+        button { width: 100%; padding: 8px; font-size: 14px; cursor: pointer; margin-bottom: 5px; border: none; border-radius: 5px; }
+        #scrapeBtn { background-color: #007bff; color: white; }
+        .download-btn { background-color: #28a745; color: white; }
         .download-btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .html-scrape-btn { background-color: #fd7e14; color: white; padding: 6px; font-size: 12px; }
+        .html-scrape-btn:hover { background-color: #e55100; }
         #status { margin-top: 15px; font-style: italic; color: #555; }
+        h4 { color: #333; }
     </style>
   <script type="module" crossorigin src="/popup.js"></script>
 </head>
 <body>
     <h3>FAP Revamp Helper</h3>
-    <button id="scrapeBtn">Cào Profile + Lịch Thi + Chương Trình Học</button>
-    <div style="margin-top: 10px;">
-        <button id="downloadAllBtn" class="download-btn" disabled>Tải tất cả dữ liệu (JSON)</button>
-        <button id="downloadProfileBtn" class="download-btn" disabled>Tải Profile (JSON)</button>
-        <button id="downloadExamBtn" class="download-btn" disabled>Tải Lịch Thi (JSON)</button>
-        <button id="downloadCurriculumBtn" class="download-btn" disabled>Tải Chương Trình Học (JSON)</button>
+    
+    <!-- Original Data Scraping Section -->
+    <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
+        <h4 style="margin: 5px 0; font-size: 14px;">Cào Dữ Liệu JSON</h4>
+        <button id="scrapeBtn">Cào Profile + Lịch Thi + Chương Trình Học</button>
+        <div style="margin-top: 10px;">
+            <button id="downloadAllBtn" class="download-btn" disabled>Tải tất cả dữ liệu (JSON)</button>
+            <button id="downloadProfileBtn" class="download-btn" disabled>Tải Profile (JSON)</button>
+            <button id="downloadExamBtn" class="download-btn" disabled>Tải Lịch Thi (JSON)</button>
+            <button id="downloadCurriculumBtn" class="download-btn" disabled>Tải Chương Trình Học (JSON)</button>
+        </div>
     </div>
+    
+    <!-- HTML Scraping Section -->
+    <div>
+        <h4 style="margin: 5px 0; font-size: 14px;">Cào HTML Các Trang</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
+            <button id="scrapeWeeklyScheduleBtn" class="html-scrape-btn">Lịch Tuần</button>
+            <button id="scrapeExamScheduleBtn" class="html-scrape-btn">Lịch Thi</button>
+            <button id="scrapeGradesBtn" class="html-scrape-btn">Điểm</button>
+            <button id="scrapeAttendanceBtn" class="html-scrape-btn">Điểm Danh</button>
+        </div>
+        <div style="margin-top: 5px;">
+            <button id="scrapeCurrentPageBtn" class="html-scrape-btn" style="width: 100%;">Cào Trang Hiện Tại</button>
+        </div>
+    </div>
+    
     <p id="status">Sẵn sàng để bắt đầu cào dữ liệu.</p>
 
 </body>

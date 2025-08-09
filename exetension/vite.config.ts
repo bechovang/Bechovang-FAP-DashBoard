@@ -13,6 +13,8 @@ export default defineConfig({
         'content-scripts/fap-scraper': resolve(__dirname, 'src/content-scripts/fap-scraper.ts'),
         'content-scripts/fap-curriculum-scraper': resolve(__dirname, 'src/content-scripts/fap-curriculum-scraper.ts'),
         'content-scripts/fap-profile-scraper': resolve(__dirname, 'src/content-scripts/fap-profile-scraper.ts'),
+        'content-scripts/html-scraper': resolve(__dirname, 'src/content-scripts/html-scraper.ts'),
+        'content-scripts/fap-schedule-scraper': resolve(__dirname, 'src/content-scripts/fap-schedule-scraper.ts'),
       },
       output: {
         entryFileNames: '[name].js',

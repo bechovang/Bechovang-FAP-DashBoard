@@ -1,0 +1,37 @@
+┌─────────────────────────────────────┐
+│        FAP Revamp Helper            │
+├─────────────────────────────────────┤
+│                                     │
+│  [Cào Profile + Lịch Thi +         │
+│   Chương Trình Học]                 │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │ [Tải tất cả dữ liệu (JSON)]    │ │
+│  │ [Tải Profile (JSON)]           │ │  
+│  │ [Tải Lịch Thi (JSON)]          │ │
+│  │ [Tải Chương Trình Học (JSON)]  │ │
+│  │ [Tải Lịch Học (JSON)]          │ │
+│  └─────────────────────────────────┘ │
+│  ─────────────────────────────────── │
+│  ┌─────────────────────────────────┐ │
+│  │ [🔍 Tải Debug HTML (TXT)]      │ │ ← NÚT MỚI!
+│  └─────────────────────────────────┘ │
+│                                     │
+│  Status: Sẵn sàng để bắt đầu...     │
+│                                     │
+└─────────────────────────────────────┘
+
+HƯỚNG DẪN SỬ DỤNG NÚT DEBUG:
+
+1. Vào trang: https://fap.fpt.edu.vn/Report/ScheduleOfWeek.aspx
+2. Nhấn icon extension 
+3. Nhấn nút "🔍 Tải Debug HTML (TXT)"
+4. File debug sẽ tự động tải về sau 3 giây
+5. Gửi file debug để phân tích lỗi scraper
+
+TÍNH NĂNG NÚT DEBUG:
+✅ Tự động kiểm tra xem có đang ở trang FAP không
+✅ Tiêm script debug vào trang hiện tại  
+✅ Tự động tải file debug
+✅ Hiển thị trạng thái trong popup
+✅ Vô hiệu nút tạm thời để tránh spam 
