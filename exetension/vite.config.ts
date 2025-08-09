@@ -12,6 +12,7 @@ export default defineConfig({
         popup: resolve(__dirname, 'src/popup/popup.html'),
         'content-scripts/fap-scraper': resolve(__dirname, 'src/content-scripts/fap-scraper.ts'),
         'content-scripts/fap-curriculum-scraper': resolve(__dirname, 'src/content-scripts/fap-curriculum-scraper.ts'),
+        'content-scripts/fap-profile-scraper': resolve(__dirname, 'src/content-scripts/fap-profile-scraper.ts'),
       },
       output: {
         entryFileNames: '[name].js',

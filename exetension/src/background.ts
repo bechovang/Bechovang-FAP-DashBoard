@@ -14,7 +14,7 @@ function updatePopupStatus(status: string) {
 }
 
 // Hàm tải dữ liệu
-function downloadData(type: 'all' | 'exam' | 'curriculum', filename: string) {
+function downloadData(type: 'all' | 'exam' | 'curriculum' | 'profile', filename: string) {
     chrome.storage.local.get('scrapedData', (result) => {
         console.log("== DOWNLOAD FLOW: Dữ liệu lấy từ storage:", result);
         
@@ -33,6 +33,11 @@ function downloadData(type: 'all' | 'exam' | 'curriculum', filename: string) {
                 case 'curriculum':
                     dataToDownload = {
                         curriculum: result.scrapedData.curriculum || {}
+                    };
+                    break;
+                case 'profile':
+                    dataToDownload = {
+                        profile: result.scrapedData.profile || {}
                     };
                     break;
                 default:
@@ -86,6 +91,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else if (message.action === 'downloadCurriculum') {
         console.log("== DOWNLOAD FLOW: Nhận được yêu cầu tải dữ liệu chương trình học.");
         downloadData('curriculum', 'fap_curriculum.json');
+        
+    } else if (message.action === 'downloadProfile') {
+        console.log("== DOWNLOAD FLOW: Nhận được yêu cầu tải dữ liệu profile.");
+        downloadData('profile', 'fap_profile.json');
     }
     
     // Trả về true để giữ kênh liên lạc mở cho các phản hồi bất đồng bộ (nếu cần)
@@ -97,10 +106,13 @@ async function scrapeAllData() {
     try {
         updatePopupStatus('Bắt đầu cào dữ liệu...');
         
-        // Cào dữ liệu lịch thi trước
+        // Cào dữ liệu profile trước
+        await scrapeProfile();
+        
+        // Sau đó cào dữ liệu lịch thi
         await scrapeExamData();
         
-        // Sau đó cào dữ liệu chương trình học
+        // Cuối cùng cào dữ liệu chương trình học
         await scrapeCurriculum();
         
     } catch (error) {
@@ -177,7 +189,42 @@ async function scrapeCurriculum() {
     }
 }
 
+// Hàm cào dữ liệu profile
+async function scrapeProfile() {
+    try {
+        // URL của trang profile
+        const profileUrl = "https://fap.fpt.edu.vn/User/Profile.aspx";
+        
+        updatePopupStatus('Đang mở trang Profile...');
+
+        // Tạo một tab mới để thực hiện việc cào
+        const tab = await chrome.tabs.create({ url: profileUrl, active: false });
+        
+        if (tab.id) {
+            // Lắng nghe sự kiện tab được cập nhật hoàn toàn
+            chrome.tabs.onUpdated.addListener(async function listener(tabId, info) {
+                if (tabId === tab.id && info.status === 'complete') {
+                    // Gỡ bỏ listener để tránh chạy nhiều lần
+                    chrome.tabs.onUpdated.removeListener(listener);
+
+                    updatePopupStatus('Đang cào dữ liệu Profile...');
+                    
+                    // Tiêm content script vào trang
+                    await injectAndExecuteScript(tab.id, 'content-scripts/fap-profile-scraper.js');
+                    
+                    // Đóng tab sau khi cào xong (có thể comment dòng này để debug)
+                    // await chrome.tabs.remove(tab.id);
+                }
+            });
+        }
+    } catch (error) {
+        console.error("Lỗi trong quá trình cào dữ liệu profile:", error);
+        updatePopupStatus(`Đã xảy ra lỗi: ${(error as Error).message}`);
+    }
+}
+
 // Biến để lưu trữ dữ liệu tạm thời
+let tempProfileData: any = null;
 let tempExamData: any = null;
 let tempCurriculumData: any = null;
 
@@ -204,18 +251,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Lưu dữ liệu chương trình học tạm thời
         tempCurriculumData = data;
         
-        // Kiểm tra xem đã có dữ liệu lịch thi chưa
+        // Kiểm tra xem đã có đủ dữ liệu chưa
+        checkAndSaveAllData();
+        
+    } else if (message.action === 'scrapedProfileData') {
+        const data = message.data;
+        console.log("Đã nhận dữ liệu profile từ content script:", data);
+        
+        updatePopupStatus('Đã nhận dữ liệu profile...');
+        
+        // Lưu dữ liệu profile tạm thời
+        tempProfileData = data;
+        
+        // Kiểm tra xem đã có đủ dữ liệu chưa
         checkAndSaveAllData();
     }
 });
 
 // Hàm kiểm tra và lưu tất cả dữ liệu khi đã có đủ
 function checkAndSaveAllData() {
-    if (tempExamData && tempCurriculumData) {
+    if (tempProfileData && tempExamData && tempCurriculumData) {
         updatePopupStatus('Đang lưu trữ tất cả dữ liệu...');
 
-        // Tạo cấu trúc JSON cuối cùng với cả lịch thi và chương trình học
+        // Tạo cấu trúc JSON cuối cùng với profile, lịch thi và chương trình học
         const finalJson = {
+            profile: tempProfileData,
             examSchedule: tempExamData,
             curriculum: tempCurriculumData
         };
@@ -225,6 +285,7 @@ function checkAndSaveAllData() {
             console.log('== SAVE FLOW: Tất cả dữ liệu đã được LƯU THÀNH CÔNG vào storage.'); // Thêm log xác nhận
             
             // Reset dữ liệu tạm thời
+            tempProfileData = null;
             tempExamData = null;
             tempCurriculumData = null;
             

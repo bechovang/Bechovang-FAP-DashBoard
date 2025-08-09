@@ -1,6 +1,7 @@
 // Lấy các element từ HTML
 const scrapeBtn = document.getElementById('scrapeBtn') as HTMLButtonElement;
 const downloadAllBtn = document.getElementById('downloadAllBtn') as HTMLButtonElement;
+const downloadProfileBtn = document.getElementById('downloadProfileBtn') as HTMLButtonElement;
 const downloadExamBtn = document.getElementById('downloadExamBtn') as HTMLButtonElement;
 const downloadCurriculumBtn = document.getElementById('downloadCurriculumBtn') as HTMLButtonElement;
 const statusDiv = document.getElementById('status') as HTMLParagraphElement;
@@ -29,6 +30,10 @@ downloadAllBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'downloadAll' });
 });
 
+downloadProfileBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'downloadProfile' });
+});
+
 downloadExamBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'downloadExam' });
 });
@@ -45,6 +50,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         statusDiv.textContent = 'Đã cào dữ liệu thành công!';
         // Kích hoạt tất cả nút tải
         downloadAllBtn.disabled = false;
+        downloadProfileBtn.disabled = false;
         downloadExamBtn.disabled = false;
         downloadCurriculumBtn.disabled = false;
         scrapeBtn.disabled = false;  // Cho phép cào lại
