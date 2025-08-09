@@ -1,6 +1,8 @@
 // Lấy các element từ HTML
 const scrapeBtn = document.getElementById('scrapeBtn') as HTMLButtonElement;
-const downloadBtn = document.getElementById('downloadBtn') as HTMLButtonElement;
+const downloadAllBtn = document.getElementById('downloadAllBtn') as HTMLButtonElement;
+const downloadExamBtn = document.getElementById('downloadExamBtn') as HTMLButtonElement;
+const downloadCurriculumBtn = document.getElementById('downloadCurriculumBtn') as HTMLButtonElement;
 const statusDiv = document.getElementById('status') as HTMLParagraphElement;
 
 // Gửi yêu cầu cào dữ liệu khi nhấn nút
@@ -22,9 +24,17 @@ scrapeBtn.addEventListener('click', () => {
     });
 });
 
-// Xử lý sự kiện tải file JSON
-downloadBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'downloadJson' });
+// Xử lý các sự kiện tải file JSON
+downloadAllBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'downloadAll' });
+});
+
+downloadExamBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'downloadExam' });
+});
+
+downloadCurriculumBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'downloadCurriculum' });
 });
 
 // Lắng nghe thông điệp cập nhật trạng thái từ background script
@@ -33,7 +43,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         statusDiv.textContent = message.data;
     } else if (message.action === 'scrapingComplete') {
         statusDiv.textContent = 'Đã cào dữ liệu thành công!';
-        downloadBtn.disabled = false; // Kích hoạt nút tải
+        // Kích hoạt tất cả nút tải
+        downloadAllBtn.disabled = false;
+        downloadExamBtn.disabled = false;
+        downloadCurriculumBtn.disabled = false;
         scrapeBtn.disabled = false;  // Cho phép cào lại
     }
 });

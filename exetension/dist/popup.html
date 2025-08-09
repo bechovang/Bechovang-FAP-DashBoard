@@ -5,19 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAP Helper</title>
     <style>
-        body { font-family: sans-serif; width: 250px; padding: 10px; text-align: center; }
-        button { width: 100%; padding: 10px; font-size: 16px; cursor: pointer; }
+        body { font-family: sans-serif; width: 300px; padding: 10px; text-align: center; }
+        button { width: 100%; padding: 8px; font-size: 14px; cursor: pointer; margin-bottom: 5px; }
         #scrapeBtn { background-color: #007bff; color: white; border: none; border-radius: 5px; }
-        #downloadBtn { background-color: #28a745; color: white; border: none; border-radius: 5px; margin-top: 10px; }
-        #downloadBtn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .download-btn { background-color: #28a745; color: white; border: none; border-radius: 5px; }
+        .download-btn:disabled { background-color: #cccccc; cursor: not-allowed; }
         #status { margin-top: 15px; font-style: italic; color: #555; }
     </style>
 </head>
 <body>
     <h3>FAP Revamp Helper</h3>
-    <button id="scrapeBtn">Bắt đầu cào dữ liệu</button>
-    <button id="downloadBtn" disabled>Tải dữ liệu (JSON)</button>
-    <p id="status">Sẵn sàng để bắt đầu.</p>
+    <button id="scrapeBtn">Cào Lịch Thi & Chương Trình Học</button>
+    <div style="margin-top: 10px;">
+        <button id="downloadAllBtn" class="download-btn" disabled>Tải tất cả dữ liệu (JSON)</button>
+        <button id="downloadExamBtn" class="download-btn" disabled>Tải Lịch Thi (JSON)</button>
+        <button id="downloadCurriculumBtn" class="download-btn" disabled>Tải Chương Trình Học (JSON)</button>
+    </div>
+    <p id="status">Sẵn sàng để bắt đầu cào dữ liệu.</p>
 
     <script src="popup.js" type="module"></script>
 </body>
