@@ -115,6 +115,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log('Nhận được yêu cầu cào JSON điểm từ các link:', message.urls);
         scrapeGradeJSON(message.urls);
         sendResponse({ status: 'Đang bắt đầu cào điểm từ các môn học...' });
+    } else if (message.action === 'scrapeAttendanceJSON') {
+        // Cào JSON điểm danh từ các link môn học
+        console.log('Nhận được yêu cầu cào JSON điểm danh từ các link:', message.urls);
+        scrapeAttendanceJSON(message.urls);
+        sendResponse({ status: 'Đang bắt đầu cào điểm danh từ các môn học...' });
     }
     
     // Trả về true để giữ kênh liên lạc mở cho các phản hồi bất đồng bộ (nếu cần)
@@ -335,6 +340,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         dataReceived = true;
         
         updatePopupStatus('Đã thu thập dữ liệu điểm, đang tiếp tục...');
+    } else if (message.action === 'scrapedAttendanceJSON') {
+        // Xử lý dữ liệu JSON điểm danh đã cào từ content script
+        const attendanceData = message.data;
+        console.log("Đã nhận dữ liệu JSON điểm danh từ content script:", attendanceData.fileName);
+        
+        // Thêm dữ liệu vào bộ sưu tập tổng hợp
+        if (attendanceData.attendanceData && attendanceData.attendanceData.semesters) {
+            for (const semester of attendanceData.attendanceData.semesters) {
+                // Kiểm tra xem kỳ học này đã có trong danh sách chưa
+                let existingSemester = attendanceSemesterMap.get(semester.term);
+                
+                if (!existingSemester) {
+                    // Tạo kỳ học mới
+                    existingSemester = {
+                        term: semester.term,
+                        courses: []
+                    };
+                    attendanceSemesterMap.set(semester.term, existingSemester);
+                    allAttendanceData.semesters.push(existingSemester);
+                }
+                
+                // Thêm các môn học vào kỳ học
+                for (const course of semester.courses) {
+                    existingSemester.courses.push(course);
+                }
+            }
+        }
+        
+        // Đánh dấu đã nhận được dữ liệu
+        attendanceDataReceived = true;
+        
+        updatePopupStatus('Đã thu thập dữ liệu điểm danh, đang tiếp tục...');
     }
 });
 
@@ -587,6 +624,18 @@ const semesterMap = new Map<string, any>();
 // Flag để theo dõi việc nhận dữ liệu từ content script
 let dataReceived = false;
 
+// Biến để lưu trữ dữ liệu điểm danh từ tất cả các môn học
+let allAttendanceData: any = {
+    lastUpdated: new Date().toISOString(),
+    semesters: []
+};
+
+// Map để nhóm các môn học điểm danh theo kỳ học
+const attendanceSemesterMap = new Map<string, any>();
+
+// Flag để theo dõi việc nhận dữ liệu điểm danh từ content script
+let attendanceDataReceived = false;
+
 // Hàm cào JSON điểm từ các link môn học
 async function scrapeGradeJSON(urls: string[]) {
     try {
@@ -693,6 +742,117 @@ async function scrapeGradeJSON(urls: string[]) {
         updatePopupStatus(`Lỗi: ${(error as Error).message}`);
         chrome.runtime.sendMessage({ 
             action: 'gradeJSONScrapingError', 
+            error: (error as Error).message 
+        });
+    }
+}
+
+// Hàm cào JSON điểm danh từ các link môn học
+async function scrapeAttendanceJSON(urls: string[]) {
+    try {
+        // Reset dữ liệu
+        allAttendanceData = {
+            lastUpdated: new Date().toISOString(),
+            semesters: []
+        };
+        attendanceSemesterMap.clear();
+        attendanceDataReceived = false;
+        
+        updatePopupStatus(`Đang cào điểm danh từ ${urls.length} môn học...`);
+        
+        for (let i = 0; i < urls.length; i++) {
+            const url = urls[i];
+            
+            // Cập nhật tiến độ
+            chrome.runtime.sendMessage({ 
+                action: 'attendanceJSONScrapingProgress', 
+                current: i + 1, 
+                total: urls.length 
+            });
+            
+            try {
+                // Tạo tab mới để cào dữ liệu từ URL này
+                const tab = await chrome.tabs.create({ url: url, active: false });
+                
+                if (tab.id) {
+                    // Đợi trang load xong và cào dữ liệu
+                    await new Promise<void>((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            chrome.tabs.onUpdated.removeListener(listener);
+                            reject(new Error('Timeout waiting for page to load'));
+                        }, 30000); // 30 giây timeout
+                        
+                        const listener = async (tabId: number, info: any) => {
+                            if (tabId === tab.id && info.status === 'complete') {
+                                clearTimeout(timeout);
+                                chrome.tabs.onUpdated.removeListener(listener);
+                                
+                                try {
+                                    // Tiêm content script attendance JSON scraper vào trang
+                                    await injectAndExecuteScript(tab.id, 'content-scripts/attendance-json-scraper.js');
+                                    
+                                    // Đợi một chút để content script chạy xong
+                                    await new Promise(resolve => setTimeout(resolve, 3000));
+                                    
+                                    resolve();
+                                } catch (error) {
+                                    reject(error);
+                                }
+                            }
+                        };
+                        
+                        chrome.tabs.onUpdated.addListener(listener);
+                    });
+                    
+                    // Đợi cho đến khi nhận được dữ liệu từ content script hoặc timeout
+                    let waitTime = 0;
+                    const maxWaitTime = 10000; // 10 giây timeout
+                    
+                    while (!attendanceDataReceived && waitTime < maxWaitTime) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        waitTime += 500;
+                    }
+                    
+                    // Reset flag cho môn học tiếp theo
+                    attendanceDataReceived = false;
+                    
+                    // Đóng tab sau khi cào xong
+                    try {
+                        await chrome.tabs.remove(tab.id);
+                    } catch (error) {
+                        console.log('Tab có thể đã được đóng trước đó:', error);
+                    }
+                    
+                    // Đợi một chút trước khi cào môn học tiếp theo
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                }
+            } catch (error) {
+                console.error(`Lỗi khi cào điểm danh từ URL ${url}:`, error);
+                // Tiếp tục với môn học tiếp theo
+            }
+        }
+        
+        // Tạo file JSON tổng hợp sau khi cào xong tất cả
+        const fileName = `fap-attendance-combined-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        const content = JSON.stringify(allAttendanceData, null, 2);
+        
+        // Tải file JSON tổng hợp
+        downloadJSONFile(content, fileName);
+        
+        // Gửi thông báo hoàn thành
+        chrome.runtime.sendMessage({ 
+            action: 'attendanceJSONScrapingComplete', 
+            fileName: fileName 
+        });
+        
+        updatePopupStatus(`Đã hoàn thành cào điểm danh từ ${urls.length} môn học và tạo file tổng hợp!`);
+        
+    } catch (error) {
+        console.error('Lỗi trong quá trình cào JSON điểm danh:', error);
+        updatePopupStatus(`Lỗi: ${(error as Error).message}`);
+        chrome.runtime.sendMessage({ 
+            action: 'attendanceJSONScrapingError', 
             error: (error as Error).message 
         });
     }

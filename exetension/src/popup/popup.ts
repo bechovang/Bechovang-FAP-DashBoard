@@ -16,6 +16,8 @@ const scrapeCurrentPageBtn = document.getElementById('scrapeCurrentPageBtn') as 
 const scrapeScheduleJSONBtn = document.getElementById('scrapeScheduleJSONBtn') as HTMLButtonElement;
 const scrapeGradeJSONBtn = document.getElementById('scrapeGradeJSONBtn') as HTMLButtonElement;
 const gradeUrlsInput = document.getElementById('gradeUrlsInput') as HTMLTextAreaElement;
+const scrapeAttendanceJSONBtn = document.getElementById('scrapeAttendanceJSONBtn') as HTMLButtonElement;
+const attendanceUrlsInput = document.getElementById('attendanceUrlsInput') as HTMLTextAreaElement;
 
 const statusDiv = document.getElementById('status') as HTMLParagraphElement;
 
@@ -101,6 +103,20 @@ scrapeGradeJSONBtn.addEventListener('click', () => {
     });
 });
 
+scrapeAttendanceJSONBtn.addEventListener('click', () => {
+    const urls = attendanceUrlsInput.value.trim().split('\n').filter(url => url.trim() !== '');
+    if (urls.length === 0) {
+        statusDiv.textContent = 'Vui lòng nhập ít nhất một link điểm danh!';
+        return;
+    }
+    
+    statusDiv.textContent = `Đang cào điểm danh từ ${urls.length} môn học...`;
+    chrome.runtime.sendMessage({ 
+        action: 'scrapeAttendanceJSON', 
+        urls: urls 
+    });
+});
+
 // Lắng nghe thông điệp cập nhật trạng thái từ background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'updateStatus') {
@@ -127,5 +143,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         statusDiv.textContent = `Lỗi cào JSON điểm: ${message.error}`;
     } else if (message.action === 'gradeJSONScrapingProgress') {
         statusDiv.textContent = `Đang cào điểm... (${message.current}/${message.total})`;
+    } else if (message.action === 'attendanceJSONScrapingComplete') {
+        statusDiv.textContent = `Đã cào JSON điểm danh thành công! File tổng hợp đã được tải xuống.`;
+    } else if (message.action === 'attendanceJSONScrapingError') {
+        statusDiv.textContent = `Lỗi cào JSON điểm danh: ${message.error}`;
+    } else if (message.action === 'attendanceJSONScrapingProgress') {
+        statusDiv.textContent = `Đang cào điểm danh... (${message.current}/${message.total})`;
     }
 });
