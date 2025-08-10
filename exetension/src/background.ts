@@ -53,7 +53,7 @@ function downloadData(type: 'all' | 'exam' | 'curriculum' | 'profile', filename:
                 chrome.downloads.download({
                     url: dataStr,
                     filename: filename,
-                    saveAs: true
+                    saveAs: false
                 }, (downloadId) => {
                     if (chrome.runtime.lastError) {
                         console.error("== DOWNLOAD FLOW: Lỗi khi tải file:", chrome.runtime.lastError);
@@ -506,7 +506,7 @@ function downloadHTMLFile(content: string, fileName: string) {
         chrome.downloads.download({
             url: dataStr,
             filename: fileName,
-            saveAs: true
+            saveAs: false
         }, (downloadId) => {
             if (chrome.runtime.lastError) {
                 console.error("== HTML DOWNLOAD FLOW: Lỗi khi tải file:", chrome.runtime.lastError);
@@ -541,7 +541,7 @@ function downloadJSONFile(content: string, fileName: string) {
         chrome.downloads.download({
             url: dataStr,
             filename: fileName,
-            saveAs: true
+            saveAs: false
         }, (downloadId) => {
             if (chrome.runtime.lastError) {
                 console.error("== JSON DOWNLOAD FLOW: Lỗi khi tải file:", chrome.runtime.lastError);

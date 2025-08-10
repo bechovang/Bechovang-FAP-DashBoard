@@ -21,6 +21,17 @@ const attendanceUrlsInput = document.getElementById('attendanceUrlsInput') as HT
 
 const statusDiv = document.getElementById('status') as HTMLParagraphElement;
 
+// Khởi tạo trạng thái khi mở popup: nếu đã có dữ liệu cào, bật nút tải
+chrome.storage.local.get('scrapedData', (result) => {
+    if (result && result.scrapedData) {
+        downloadAllBtn.disabled = false;
+        downloadProfileBtn.disabled = false;
+        downloadExamBtn.disabled = false;
+        downloadCurriculumBtn.disabled = false;
+        statusDiv.textContent = 'Dữ liệu đã sẵn sàng để tải.';
+    }
+});
+
 // Gửi yêu cầu cào dữ liệu khi nhấn nút
 scrapeBtn.addEventListener('click', () => {
     // Vô hiệu hóa nút để tránh người dùng nhấn nhiều lần
