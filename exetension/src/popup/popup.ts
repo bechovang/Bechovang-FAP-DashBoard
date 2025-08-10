@@ -5,12 +5,12 @@ const downloadProfileBtn = document.getElementById('downloadProfileBtn') as HTML
 const downloadExamBtn = document.getElementById('downloadExamBtn') as HTMLButtonElement;
 const downloadCurriculumBtn = document.getElementById('downloadCurriculumBtn') as HTMLButtonElement;
 
-// HTML scraping buttons
-const scrapeWeeklyScheduleBtn = document.getElementById('scrapeWeeklyScheduleBtn') as HTMLButtonElement;
-const scrapeExamScheduleBtn = document.getElementById('scrapeExamScheduleBtn') as HTMLButtonElement;
-const scrapeGradesBtn = document.getElementById('scrapeGradesBtn') as HTMLButtonElement;
-const scrapeAttendanceBtn = document.getElementById('scrapeAttendanceBtn') as HTMLButtonElement;
-const scrapeCurrentPageBtn = document.getElementById('scrapeCurrentPageBtn') as HTMLButtonElement;
+// HTML scraping buttons (optional, section may be removed from UI)
+const scrapeWeeklyScheduleBtn = document.getElementById('scrapeWeeklyScheduleBtn') as HTMLButtonElement | null;
+const scrapeExamScheduleBtn = document.getElementById('scrapeExamScheduleBtn') as HTMLButtonElement | null;
+const scrapeGradesBtn = document.getElementById('scrapeGradesBtn') as HTMLButtonElement | null;
+const scrapeAttendanceBtn = document.getElementById('scrapeAttendanceBtn') as HTMLButtonElement | null;
+const scrapeCurrentPageBtn = document.getElementById('scrapeCurrentPageBtn') as HTMLButtonElement | null;
 
 // JSON scraping buttons
 const scrapeScheduleJSONBtn = document.getElementById('scrapeScheduleJSONBtn') as HTMLButtonElement;
@@ -57,28 +57,28 @@ downloadCurriculumBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'downloadCurriculum' });
 });
 
-// HTML scraping event listeners
-scrapeWeeklyScheduleBtn.addEventListener('click', () => {
+// HTML scraping event listeners (optional)
+scrapeWeeklyScheduleBtn?.addEventListener('click', () => {
     statusDiv.textContent = 'Đang mở trang lịch tuần...';
     chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'weekly-schedule' });
 });
 
-scrapeExamScheduleBtn.addEventListener('click', () => {
+scrapeExamScheduleBtn?.addEventListener('click', () => {
     statusDiv.textContent = 'Đang mở trang lịch thi...';
     chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'exam-schedule' });
 });
 
-scrapeGradesBtn.addEventListener('click', () => {
+scrapeGradesBtn?.addEventListener('click', () => {
     statusDiv.textContent = 'Đang mở trang điểm...';
     chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'student-grades' });
 });
 
-scrapeAttendanceBtn.addEventListener('click', () => {
+scrapeAttendanceBtn?.addEventListener('click', () => {
     statusDiv.textContent = 'Đang mở trang điểm danh...';
     chrome.runtime.sendMessage({ action: 'scrapeHTMLPage', pageType: 'attendance-report' });
 });
 
-scrapeCurrentPageBtn.addEventListener('click', () => {
+scrapeCurrentPageBtn?.addEventListener('click', () => {
     statusDiv.textContent = 'Đang cào trang hiện tại...';
     chrome.runtime.sendMessage({ action: 'scrapeCurrentPage' });
 });

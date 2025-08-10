@@ -12,65 +12,67 @@
         .download-btn:disabled { background-color: #cccccc; cursor: not-allowed; }
         .html-scrape-btn { background-color: #fd7e14; color: white; padding: 6px; font-size: 12px; }
         .html-scrape-btn:hover { background-color: #e55100; }
-        #status { margin-top: 15px; font-style: italic; color: #555; }
-        h4 { color: #333; }
+        #status { margin-top: 10px; font-style: italic; color: #555; text-align: left; }
+        h3 { margin: 6px 0 8px; }
+        /* Compact layout helpers */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .stack { display: grid; gap: 6px; }
+        .full { width: 100%; }
+        details.section { border: 1px solid #eee; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; text-align: left; }
+        details.section > summary { font-weight: 600; cursor: pointer; list-style: none; }
+        details.section > summary::-webkit-details-marker { display: none; }
+        details.section[open] { padding-bottom: 8px; }
+        .section { border: 1px solid #eee; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; text-align: left; }
+        .subtle { font-size: 12px; color: #666; margin: 2px 0 6px; }
+        textarea { width: 100%; height: 80px; padding: 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px; resize: vertical; }
     </style>
   <script type="module" crossorigin src="/popup.js"></script>
 </head>
 <body>
     <h3>FAP Revamp Helper</h3>
-    
-    <!-- Original Data Scraping Section -->
-    <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
-        <h4 style="margin: 5px 0; font-size: 14px;">Cào Dữ Liệu JSON</h4>
-        <button id="scrapeBtn">Cào Profile + Lịch Thi + Chương Trình Học</button>
-        <div style="margin-top: 10px;">
-            <button id="downloadAllBtn" class="download-btn" disabled>Tải tất cả dữ liệu (JSON)</button>
-            <button id="downloadProfileBtn" class="download-btn" disabled>Tải Profile (JSON)</button>
-            <button id="downloadExamBtn" class="download-btn" disabled>Tải Lịch Thi (JSON)</button>
-            <button id="downloadCurriculumBtn" class="download-btn" disabled>Tải Chương Trình Học (JSON)</button>
+
+    <!-- Quick JSON scrape + downloads -->
+    <details class="section" open>
+        <summary>Cào Dữ Liệu JSON (Nhanh)</summary>
+        <p class="subtle">Cào Profile, Lịch Thi, Chương Trình Học và cho phép tải xuống.</p>
+        <div class="stack">
+            <button id="scrapeBtn">Cào Profile + Lịch Thi + Chương Trình Học</button>
+            <div class="stack">
+                <button id="downloadAllBtn" class="download-btn" disabled>Tải tất cả dữ liệu (JSON)</button>
+                <button id="downloadProfileBtn" class="download-btn" disabled>Tải Profile (JSON)</button>
+                <button id="downloadExamBtn" class="download-btn" disabled>Tải Lịch Thi (JSON)</button>
+                <button id="downloadCurriculumBtn" class="download-btn" disabled>Tải Chương Trình Học (JSON)</button>
+            </div>
+        </div>
+    </details>
+
+    <!-- Advanced JSON Scraping Section (always visible) -->
+    <div class="section">
+        <div class="stack" style="margin-top: 6px;">
+            <div>
+                <div class="subtle" style="font-weight:600;">Cào JSON Nâng Cao</div>
+                <p class="subtle">Lịch học tuần</p>
+                <button id="scrapeScheduleJSONBtn" style="background-color: #17a2b8; color: white;" class="full">Cào Lịch Tuần (JSON)</button>
+            </div>
+            <div>
+                <div class="subtle" style="font-weight:600;">Cào JSON Điểm</div>
+                <div class="stack" style="margin-top: 6px;">
+                    <textarea id="gradeUrlsInput" placeholder="Nhập các link môn học (mỗi link một dòng)&#10;Ví dụ:&#10;https://fap.fpt.edu.vn/Grade/StudentGrade.aspx?rollNumber=SE123456&term=Spring2025&course=PRF192&#10;https://fap.fpt.edu.vn/Grade/StudentGrade.aspx?rollNumber=SE123456&term=Spring2025&course=MAE101"></textarea>
+                    <button id="scrapeGradeJSONBtn" style="background-color: #6f42c1; color: white;" class="full">Cào Điểm (JSON)</button>
+                </div>
+            </div>
+            <div>
+                <div class="subtle" style="font-weight:600;">Cào JSON Điểm Danh</div>
+                <div class="stack" style="margin-top: 6px;">
+                    <textarea id="attendanceUrlsInput" placeholder="Nhập các link điểm danh (mỗi link một dòng)&#10;Ví dụ:&#10;https://fap.fpt.edu.vn/Report/ViewAttendstudent.aspx?id=SE123456&campus=HCM&term=Spring2025&course=PRF192&#10;https://fap.fpt.edu.vn/Report/ViewAttendstudent.aspx?id=SE123456&campus=HCM&term=Spring2025&course=MAE101"></textarea>
+                    <button id="scrapeAttendanceJSONBtn" style="background-color: #e83e8c; color: white;" class="full">Cào Điểm Danh (JSON)</button>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <!-- HTML Scraping Section -->
-    <div>
-        <h4 style="margin: 5px 0; font-size: 14px;">Cào HTML Các Trang</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
-            <button id="scrapeWeeklyScheduleBtn" class="html-scrape-btn">Lịch Tuần</button>
-            <button id="scrapeExamScheduleBtn" class="html-scrape-btn">Lịch Thi</button>
-            <button id="scrapeGradesBtn" class="html-scrape-btn">Điểm</button>
-            <button id="scrapeAttendanceBtn" class="html-scrape-btn">Điểm Danh</button>
-        </div>
-        <div style="margin-top: 5px;">
-            <button id="scrapeCurrentPageBtn" class="html-scrape-btn" style="width: 100%;">Cào Trang Hiện Tại</button>
-        </div>
-    </div>
-    
-    <!-- JSON Scraping Section -->
-    <div style="border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px;">
-        <h4 style="margin: 5px 0; font-size: 14px;">Cào JSON Lịch Học</h4>
-        <button id="scrapeScheduleJSONBtn" style="background-color: #17a2b8; color: white; width: 100%; padding: 8px; font-size: 14px; cursor: pointer; border: none; border-radius: 5px;">Cào Lịch Tuần (JSON)</button>
-    </div>
-    
-    <!-- Grade JSON Scraping Section -->
-    <div style="border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px;">
-        <h4 style="margin: 5px 0; font-size: 14px;">Cào JSON Điểm</h4>
-        <div style="margin-bottom: 10px;">
-            <textarea id="gradeUrlsInput" placeholder="Nhập các link môn học (mỗi link một dòng)&#10;Ví dụ:&#10;https://fap.fpt.edu.vn/Grade/StudentGrade.aspx?rollNumber=SE123456&term=Spring2025&course=PRF192&#10;https://fap.fpt.edu.vn/Grade/StudentGrade.aspx?rollNumber=SE123456&term=Spring2025&course=MAE101" style="width: 100%; height: 80px; padding: 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px; resize: vertical;"></textarea>
-        </div>
-        <button id="scrapeGradeJSONBtn" style="background-color: #6f42c1; color: white; width: 100%; padding: 8px; font-size: 14px; cursor: pointer; border: none; border-radius: 5px;">Cào Điểm (JSON)</button>
-    </div>
-    
-    <!-- Attendance JSON Scraping Section -->
-    <div style="border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px;">
-        <h4 style="margin: 5px 0; font-size: 14px;">Cào JSON Điểm Danh</h4>
-        <div style="margin-bottom: 10px;">
-            <textarea id="attendanceUrlsInput" placeholder="Nhập các link điểm danh (mỗi link một dòng)&#10;Ví dụ:&#10;https://fap.fpt.edu.vn/Report/ViewAttendstudent.aspx?id=SE123456&campus=HCM&term=Spring2025&course=PRF192&#10;https://fap.fpt.edu.vn/Report/ViewAttendstudent.aspx?id=SE123456&campus=HCM&term=Spring2025&course=MAE101" style="width: 100%; height: 80px; padding: 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px; resize: vertical;"></textarea>
-        </div>
-        <button id="scrapeAttendanceJSONBtn" style="background-color: #e83e8c; color: white; width: 100%; padding: 8px; font-size: 14px; cursor: pointer; border: none; border-radius: 5px;">Cào Điểm Danh (JSON)</button>
-    </div>
-    
+
     <p id="status">Sẵn sàng để bắt đầu cào dữ liệu.</p>
+
 
 </body>
 </html>
