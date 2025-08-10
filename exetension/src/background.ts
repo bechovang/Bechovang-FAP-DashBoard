@@ -110,6 +110,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log('Nhận được yêu cầu cào JSON lịch học tuần');
         scrapeScheduleJSON();
         sendResponse({ status: 'Đang mở trang lịch tuần để cào JSON...' });
+    } else if (message.action === 'scrapeGradeJSON') {
+        // Cào JSON điểm từ các link môn học
+        console.log('Nhận được yêu cầu cào JSON điểm từ các link:', message.urls);
+        scrapeGradeJSON(message.urls);
+        sendResponse({ status: 'Đang bắt đầu cào điểm từ các môn học...' });
     }
     
     // Trả về true để giữ kênh liên lạc mở cho các phản hồi bất đồng bộ (nếu cần)
@@ -298,6 +303,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         
         // Tải file JSON
         downloadJSONFile(scheduleData.content, scheduleData.fileName);
+    } else if (message.action === 'scrapedGradeJSON') {
+        // Xử lý dữ liệu JSON điểm đã cào từ content script
+        const gradeData = message.data;
+        console.log("Đã nhận dữ liệu JSON điểm từ content script:", gradeData.fileName);
+        
+        // Thêm dữ liệu vào bộ sưu tập tổng hợp
+        if (gradeData.gradeData && gradeData.gradeData.semesters) {
+            for (const semester of gradeData.gradeData.semesters) {
+                // Kiểm tra xem kỳ học này đã có trong danh sách chưa
+                let existingSemester = semesterMap.get(semester.term);
+                
+                if (!existingSemester) {
+                    // Tạo kỳ học mới
+                    existingSemester = {
+                        term: semester.term,
+                        courses: []
+                    };
+                    semesterMap.set(semester.term, existingSemester);
+                    allGradeData.semesters.push(existingSemester);
+                }
+                
+                // Thêm các môn học vào kỳ học
+                for (const course of semester.courses) {
+                    existingSemester.courses.push(course);
+                }
+            }
+        }
+        
+        // Đánh dấu đã nhận được dữ liệu
+        dataReceived = true;
+        
+        updatePopupStatus('Đã thu thập dữ liệu điểm, đang tiếp tục...');
     }
 });
 
@@ -533,6 +570,129 @@ async function scrapeScheduleJSON() {
         updatePopupStatus(`Lỗi: ${(error as Error).message}`);
         chrome.runtime.sendMessage({ 
             action: 'scheduleJSONScrapingError', 
+            error: (error as Error).message 
+        });
+    }
+}
+
+// Biến để lưu trữ dữ liệu điểm từ tất cả các môn học
+let allGradeData: any = {
+    lastUpdated: new Date().toISOString(),
+    semesters: []
+};
+
+// Map để nhóm các môn học theo kỳ học
+const semesterMap = new Map<string, any>();
+
+// Flag để theo dõi việc nhận dữ liệu từ content script
+let dataReceived = false;
+
+// Hàm cào JSON điểm từ các link môn học
+async function scrapeGradeJSON(urls: string[]) {
+    try {
+        // Reset dữ liệu
+        allGradeData = {
+            lastUpdated: new Date().toISOString(),
+            semesters: []
+        };
+        semesterMap.clear();
+        dataReceived = false;
+        
+        updatePopupStatus(`Đang cào điểm từ ${urls.length} môn học...`);
+        
+        for (let i = 0; i < urls.length; i++) {
+            const url = urls[i];
+            
+            // Cập nhật tiến độ
+            chrome.runtime.sendMessage({ 
+                action: 'gradeJSONScrapingProgress', 
+                current: i + 1, 
+                total: urls.length 
+            });
+            
+            try {
+                // Tạo tab mới để cào dữ liệu từ URL này
+                const tab = await chrome.tabs.create({ url: url, active: false });
+                
+                if (tab.id) {
+                    // Đợi trang load xong và cào dữ liệu
+                    await new Promise<void>((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            chrome.tabs.onUpdated.removeListener(listener);
+                            reject(new Error('Timeout waiting for page to load'));
+                        }, 30000); // 30 giây timeout
+                        
+                        const listener = async (tabId: number, info: any) => {
+                            if (tabId === tab.id && info.status === 'complete') {
+                                clearTimeout(timeout);
+                                chrome.tabs.onUpdated.removeListener(listener);
+                                
+                                try {
+                                    // Tiêm content script grade JSON scraper vào trang
+                                    await injectAndExecuteScript(tab.id, 'content-scripts/grade-json-scraper.js');
+                                    
+                                    // Đợi một chút để content script chạy xong
+                                    await new Promise(resolve => setTimeout(resolve, 3000));
+                                    
+                                    resolve();
+                                } catch (error) {
+                                    reject(error);
+                                }
+                            }
+                        };
+                        
+                        chrome.tabs.onUpdated.addListener(listener);
+                    });
+                    
+                    // Đợi cho đến khi nhận được dữ liệu từ content script hoặc timeout
+                    let waitTime = 0;
+                    const maxWaitTime = 10000; // 10 giây timeout
+                    
+                    while (!dataReceived && waitTime < maxWaitTime) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        waitTime += 500;
+                    }
+                    
+                    // Reset flag cho môn học tiếp theo
+                    dataReceived = false;
+                    
+                    // Đóng tab sau khi cào xong
+                    try {
+                        await chrome.tabs.remove(tab.id);
+                    } catch (error) {
+                        console.log('Tab có thể đã được đóng trước đó:', error);
+                    }
+                    
+                    // Đợi một chút trước khi cào môn học tiếp theo
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                }
+            } catch (error) {
+                console.error(`Lỗi khi cào điểm từ URL ${url}:`, error);
+                // Tiếp tục với môn học tiếp theo
+            }
+        }
+        
+        // Tạo file JSON tổng hợp sau khi cào xong tất cả
+        const fileName = `fap-grades-combined-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        const content = JSON.stringify(allGradeData, null, 2);
+        
+        // Tải file JSON tổng hợp
+        downloadJSONFile(content, fileName);
+        
+        // Gửi thông báo hoàn thành
+        chrome.runtime.sendMessage({ 
+            action: 'gradeJSONScrapingComplete', 
+            fileName: fileName 
+        });
+        
+        updatePopupStatus(`Đã hoàn thành cào điểm từ ${urls.length} môn học và tạo file tổng hợp!`);
+        
+    } catch (error) {
+        console.error('Lỗi trong quá trình cào JSON điểm:', error);
+        updatePopupStatus(`Lỗi: ${(error as Error).message}`);
+        chrome.runtime.sendMessage({ 
+            action: 'gradeJSONScrapingError', 
             error: (error as Error).message 
         });
     }

@@ -14,6 +14,8 @@ const scrapeCurrentPageBtn = document.getElementById('scrapeCurrentPageBtn') as 
 
 // JSON scraping buttons
 const scrapeScheduleJSONBtn = document.getElementById('scrapeScheduleJSONBtn') as HTMLButtonElement;
+const scrapeGradeJSONBtn = document.getElementById('scrapeGradeJSONBtn') as HTMLButtonElement;
+const gradeUrlsInput = document.getElementById('gradeUrlsInput') as HTMLTextAreaElement;
 
 const statusDiv = document.getElementById('status') as HTMLParagraphElement;
 
@@ -85,6 +87,20 @@ scrapeScheduleJSONBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'scrapeScheduleJSON' });
 });
 
+scrapeGradeJSONBtn.addEventListener('click', () => {
+    const urls = gradeUrlsInput.value.trim().split('\n').filter(url => url.trim() !== '');
+    if (urls.length === 0) {
+        statusDiv.textContent = 'Vui lòng nhập ít nhất một link môn học!';
+        return;
+    }
+    
+    statusDiv.textContent = `Đang cào điểm từ ${urls.length} môn học...`;
+    chrome.runtime.sendMessage({ 
+        action: 'scrapeGradeJSON', 
+        urls: urls 
+    });
+});
+
 // Lắng nghe thông điệp cập nhật trạng thái từ background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'updateStatus') {
@@ -105,5 +121,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         statusDiv.textContent = `Đã cào JSON lịch học thành công! File: ${message.fileName}`;
     } else if (message.action === 'scheduleJSONScrapingError') {
         statusDiv.textContent = `Lỗi cào JSON lịch học: ${message.error}`;
+    } else if (message.action === 'gradeJSONScrapingComplete') {
+        statusDiv.textContent = `Đã cào JSON điểm thành công! File tổng hợp đã được tải xuống.`;
+    } else if (message.action === 'gradeJSONScrapingError') {
+        statusDiv.textContent = `Lỗi cào JSON điểm: ${message.error}`;
+    } else if (message.action === 'gradeJSONScrapingProgress') {
+        statusDiv.textContent = `Đang cào điểm... (${message.current}/${message.total})`;
     }
 });
