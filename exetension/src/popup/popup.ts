@@ -12,6 +12,9 @@ const scrapeGradesBtn = document.getElementById('scrapeGradesBtn') as HTMLButton
 const scrapeAttendanceBtn = document.getElementById('scrapeAttendanceBtn') as HTMLButtonElement;
 const scrapeCurrentPageBtn = document.getElementById('scrapeCurrentPageBtn') as HTMLButtonElement;
 
+// JSON scraping buttons
+const scrapeScheduleJSONBtn = document.getElementById('scrapeScheduleJSONBtn') as HTMLButtonElement;
+
 const statusDiv = document.getElementById('status') as HTMLParagraphElement;
 
 // Gửi yêu cầu cào dữ liệu khi nhấn nút
@@ -76,6 +79,12 @@ scrapeCurrentPageBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'scrapeCurrentPage' });
 });
 
+// JSON scraping event listeners
+scrapeScheduleJSONBtn.addEventListener('click', () => {
+    statusDiv.textContent = 'Đang mở trang lịch tuần để cào JSON...';
+    chrome.runtime.sendMessage({ action: 'scrapeScheduleJSON' });
+});
+
 // Lắng nghe thông điệp cập nhật trạng thái từ background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'updateStatus') {
@@ -92,5 +101,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         statusDiv.textContent = `Đã cào HTML thành công! File: ${message.fileName}`;
     } else if (message.action === 'htmlScrapingError') {
         statusDiv.textContent = `Lỗi cào HTML: ${message.error}`;
+    } else if (message.action === 'scheduleJSONScrapingComplete') {
+        statusDiv.textContent = `Đã cào JSON lịch học thành công! File: ${message.fileName}`;
+    } else if (message.action === 'scheduleJSONScrapingError') {
+        statusDiv.textContent = `Lỗi cào JSON lịch học: ${message.error}`;
     }
 });

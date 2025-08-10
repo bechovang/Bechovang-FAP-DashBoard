@@ -105,6 +105,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log('Nhận được yêu cầu cào HTML trang hiện tại');
         scrapeCurrentPageHTML();
         sendResponse({ status: 'Đang cào HTML trang hiện tại...' });
+    } else if (message.action === 'scrapeScheduleJSON') {
+        // Cào JSON lịch học tuần
+        console.log('Nhận được yêu cầu cào JSON lịch học tuần');
+        scrapeScheduleJSON();
+        sendResponse({ status: 'Đang mở trang lịch tuần để cào JSON...' });
     }
     
     // Trả về true để giữ kênh liên lạc mở cho các phản hồi bất đồng bộ (nếu cần)
@@ -284,6 +289,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         
         // Tải file HTML
         downloadHTMLFile(htmlData.content, htmlData.fileName);
+    } else if (message.action === 'scrapedScheduleJSON') {
+        // Xử lý dữ liệu JSON lịch học đã cào từ content script
+        const scheduleData = message.data;
+        console.log("Đã nhận dữ liệu JSON lịch học từ content script:", scheduleData.fileName);
+        
+        updatePopupStatus('Đang tải file JSON lịch học...');
+        
+        // Tải file JSON
+        downloadJSONFile(scheduleData.content, scheduleData.fileName);
     }
 });
 
@@ -438,6 +452,87 @@ function downloadHTMLFile(content: string, fileName: string) {
         console.error("== HTML DOWNLOAD FLOW: Lỗi khi gọi chrome.downloads.download:", error);
         chrome.runtime.sendMessage({ 
             action: 'htmlScrapingError', 
+            error: (error as Error).message 
+        });
+    }
+}
+
+// Hàm tải file JSON
+function downloadJSONFile(content: string, fileName: string) {
+    const dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(content);
+    
+    console.log("== JSON DOWNLOAD FLOW: Chuẩn bị tải xuống file JSON:", fileName);
+    
+    try {
+        chrome.downloads.download({
+            url: dataStr,
+            filename: fileName,
+            saveAs: true
+        }, (downloadId) => {
+            if (chrome.runtime.lastError) {
+                console.error("== JSON DOWNLOAD FLOW: Lỗi khi tải file:", chrome.runtime.lastError);
+                chrome.runtime.sendMessage({ 
+                    action: 'scheduleJSONScrapingError', 
+                    error: chrome.runtime.lastError.message 
+                });
+            } else {
+                console.log("== JSON DOWNLOAD FLOW: Tải file thành công, downloadId:", downloadId);
+                chrome.runtime.sendMessage({ 
+                    action: 'scheduleJSONScrapingComplete', 
+                    fileName: fileName 
+                });
+            }
+        });
+    } catch (error) {
+        console.error("== JSON DOWNLOAD FLOW: Lỗi khi gọi chrome.downloads.download:", error);
+        chrome.runtime.sendMessage({ 
+            action: 'scheduleJSONScrapingError', 
+            error: (error as Error).message 
+        });
+    }
+}
+
+// Hàm cào JSON lịch học tuần
+async function scrapeScheduleJSON() {
+    try {
+        // URL của trang lịch học tuần
+        const scheduleUrl = "https://fap.fpt.edu.vn/Report/ScheduleOfWeek.aspx";
+        
+        updatePopupStatus('Đang mở trang lịch học tuần...');
+
+        // Tạo một tab mới để thực hiện việc cào
+        const tab = await chrome.tabs.create({ url: scheduleUrl, active: false });
+        
+        if (tab.id) {
+            // Lắng nghe sự kiện tab được cập nhật hoàn toàn
+            chrome.tabs.onUpdated.addListener(async function listener(tabId, info) {
+                if (tabId === tab.id && info.status === 'complete') {
+                    // Gỡ bỏ listener để tránh chạy nhiều lần
+                    chrome.tabs.onUpdated.removeListener(listener);
+
+                    updatePopupStatus('Đang cào JSON lịch học tuần...');
+                    
+                    // Tiêm content script schedule JSON scraper vào trang
+                    await injectAndExecuteScript(tab.id, 'content-scripts/schedule-json-scraper.js');
+                    
+                    // Đóng tab sau 5 giây (để đảm bảo scraping hoàn tất)
+                    setTimeout(async () => {
+                        try {
+                            if (tab.id) {
+                                await chrome.tabs.remove(tab.id);
+                            }
+                        } catch (error) {
+                            console.log('Tab có thể đã được đóng trước đó');
+                        }
+                    }, 5000);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Lỗi trong quá trình cào JSON lịch học tuần:', error);
+        updatePopupStatus(`Lỗi: ${(error as Error).message}`);
+        chrome.runtime.sendMessage({ 
+            action: 'scheduleJSONScrapingError', 
             error: (error as Error).message 
         });
     }
