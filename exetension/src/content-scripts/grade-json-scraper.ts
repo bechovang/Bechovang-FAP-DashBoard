@@ -1,5 +1,5 @@
 // Grade JSON Scraper for FAP Course Pages
-// Cào dữ liệu điểm từ trang môn học và chuyển thành JSON
+// Cào dữ liệu điểm từ trang môn học và chuyển thành JSON (Phiên bản đã sửa lỗi và cải tiến)
 
 interface GradeDetail {
     category: string;
@@ -26,7 +26,7 @@ interface GradeJSONResult {
     semesters: SemesterGrade[];
 }
 
-function cleanText(text: string | null): string {
+function cleanText(text: string | null | undefined): string {
     return text ? text.trim() : "";
 }
 
@@ -43,13 +43,21 @@ function parseGradeToJSON(): GradeJSONResult {
     let subjectName = '';
     
     if (courseElement) {
+        // Cải tiến regex để xử lý các trường hợp tên môn phức tạp hơn
         const courseText = cleanText(courseElement.textContent);
-        const match = courseText.match(/^(.*?)\s*\(([^)]+)\)$/);
+        const match = courseText.match(/^(.*?)\(([^)]+)\)\s*\(.+\)$/);
         if (match) {
             subjectName = match[1].trim();
             subjectCode = match[2].trim();
         } else {
-            subjectName = courseText;
+            // Fallback cho trường hợp regex không khớp
+            const simpleMatch = courseText.match(/^(.*?)\s*\(([^)]+)\)$/);
+            if (simpleMatch) {
+                subjectName = simpleMatch[1].trim();
+                subjectCode = simpleMatch[2].trim();
+            } else {
+                subjectName = courseText;
+            }
         }
     }
     
@@ -59,7 +67,6 @@ function parseGradeToJSON(): GradeJSONResult {
         throw new Error('Không tìm thấy bảng điểm');
     }
     
-    // Khởi tạo dữ liệu môn học
     const courseData: CourseGrade = {
         subjectCode: subjectCode,
         subjectName: subjectName,
@@ -67,78 +74,103 @@ function parseGradeToJSON(): GradeJSONResult {
         status: null,
         gradeDetails: []
     };
-    
-    // Lấy tất cả các hàng trong bảng điểm
-    const rows = gradeTable.querySelectorAll('tr');
-    let currentCategory = '';
-    
-    // Duyệt qua từng hàng (bỏ qua header)
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const cells = row.querySelectorAll('td');
-        
-        if (cells.length === 0) continue;
-        
-        // Kiểm tra xem đây có phải là dòng category mới không
-        const firstCell = cells[0];
-        if (firstCell.hasAttribute('rowspan')) {
-            // Đây là dòng category mới
-            currentCategory = cleanText(firstCell.textContent);
-            if (cells.length >= 4) {
-                const itemName = cleanText(cells[1].textContent);
-                const weightText = cleanText(cells[2].textContent).replace('%', '').trim();
-                const valueText = cleanText(cells[3].textContent);
-                
-                const weight = weightText ? parseFloat(weightText) : null;
-                const value = valueText ? parseFloat(valueText) : null;
-                
-                courseData.gradeDetails.push({
-                    category: currentCategory,
-                    item: itemName,
-                    weight: weight,
-                    value: value
-                });
+
+    // Xử lý <tbody> để lấy các đầu điểm
+    const tableBody = gradeTable.querySelector('tbody');
+    if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr');
+        let currentCategory = '';
+
+        for (const row of rows) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 2) continue;
+
+            const firstCell = cells[0];
+            const secondCell = cells[1];
+
+            // 1) Dòng category mới (có rowspan)
+            if (firstCell.hasAttribute('rowspan')) {
+                currentCategory = cleanText(firstCell.textContent);
+                if (cells.length >= 4) {
+                    const itemName = cleanText(cells[1].textContent);
+                    const weightText = cleanText(cells[2].textContent).replace('%', '').trim();
+                    const valueText = cleanText(cells[3].textContent);
+
+                    courseData.gradeDetails.push({
+                        category: currentCategory,
+                        item: itemName,
+                        weight: weightText ? parseFloat(weightText) : null,
+                        value: valueText ? parseFloat(valueText) : null
+                    });
+                }
             }
-        } else {
-            // Đây là dòng điểm thuộc category cũ
-            const itemName = cleanText(cells[0].textContent);
-            
-            // Xử lý các trường hợp đặc biệt
-            if (itemName.includes('Total')) {
-                continue; // Bỏ qua dòng Total
+            // 2) Dòng Bonus đặc biệt: ô đầu trống, ô thứ hai là 'Bonus'
+            else if (cleanText(firstCell.textContent) === '' && cleanText(secondCell.textContent) === 'Bonus') {
+                if (cells.length >= 4) {
+                    const valueText = cleanText(cells[3].textContent);
+                    courseData.gradeDetails.push({
+                        category: 'Bonus',
+                        item: 'Bonus',
+                        weight: null,
+                        value: valueText ? parseFloat(valueText) : null
+                    });
+                }
             }
-            
-            if (itemName.includes('Average')) {
-                const averageText = cleanText(cells[1].textContent);
-                courseData.average = averageText ? parseFloat(averageText) : null;
-                continue;
-            }
-            
-            if (itemName.includes('Status')) {
-                const statusElement = cells[1].querySelector('font');
-                courseData.status = statusElement ? cleanText(statusElement.textContent) : cleanText(cells[1].textContent);
-                continue;
-            }
-            
-            // Xử lý dòng điểm thông thường
-            if (cells.length >= 3) {
-                const weightText = cleanText(cells[1].textContent).replace('%', '').trim();
-                const valueText = cleanText(cells[2].textContent);
-                
-                const weight = weightText ? parseFloat(weightText) : null;
-                const value = valueText ? parseFloat(valueText) : null;
-                
-                courseData.gradeDetails.push({
-                    category: currentCategory,
-                    item: itemName,
-                    weight: weight,
-                    value: value
-                });
+            // 3) Dòng điểm thông thường
+            else {
+                const itemName = cleanText(firstCell.textContent);
+                if (itemName.includes('Total')) {
+                    continue; // Bỏ qua dòng Total của từng category
+                }
+
+                // Fallback: một số trang có thể để Average/Status trong tbody
+                if (itemName.includes('Average')) {
+                    const avgText = cleanText(cells[1]?.textContent);
+                    courseData.average = avgText ? parseFloat(avgText) : null;
+                    continue;
+                }
+                if (itemName.includes('Status')) {
+                    const statusElement = cells[1]?.querySelector('font');
+                    courseData.status = statusElement ? cleanText(statusElement.textContent) : cleanText(cells[1]?.textContent);
+                    continue;
+                }
+
+                if (cells.length >= 3) {
+                    const weightText = cleanText(cells[1].textContent).replace('%', '').trim();
+                    const valueText = cleanText(cells[2].textContent);
+
+                    courseData.gradeDetails.push({
+                        category: currentCategory,
+                        item: itemName,
+                        weight: weightText ? parseFloat(weightText) : null,
+                        value: valueText ? parseFloat(valueText) : null
+                    });
+                }
             }
         }
     }
-    
-    // Tạo cấu trúc kết quả
+
+    // Xử lý <tfoot> để lấy điểm tổng kết và trạng thái
+    const tableFooter = gradeTable.querySelector('tfoot');
+    if (tableFooter) {
+        const rows = tableFooter.querySelectorAll('tr');
+        for (const row of rows) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 2) continue;
+
+            const label = cleanText(cells[0].textContent);
+            const valueCell = cells[1];
+
+            if (label.includes('Average')) {
+                const averageText = cleanText(valueCell.textContent);
+                courseData.average = averageText ? parseFloat(averageText) : null;
+            } else if (label.includes('Status')) {
+                const statusElement = valueCell.querySelector('font');
+                courseData.status = statusElement ? cleanText(statusElement.textContent) : cleanText(valueCell.textContent);
+            }
+        }
+    }
+
     const semesterData: SemesterGrade = {
         term: currentTerm,
         courses: [courseData]
@@ -156,7 +188,8 @@ function parseGradeToJSON(): GradeJSONResult {
 // Chạy hàm cào và gửi dữ liệu về background script
 try {
     const scrapedData = parseGradeToJSON();
-    const fileName = `fap-grade-${scrapedData.semesters[0].courses[0].subjectCode}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    const safeSubjectCode = scrapedData.semesters[0]?.courses[0]?.subjectCode.replace(/[^a-zA-Z0-9]/g, '') || 'unknown';
+    const fileName = `fap-grade-${safeSubjectCode}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
     
     // Gửi dữ liệu về background script để xử lý download
     chrome.runtime.sendMessage({
