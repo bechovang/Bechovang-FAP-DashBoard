@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAP Helper</title>
+    <style>
+        body { font-family: sans-serif; width: 320px; padding: 10px; text-align: center; }
+        button { width: 100%; padding: 8px; font-size: 14px; cursor: pointer; margin-bottom: 5px; border: none; border-radius: 5px; }
+        #scrapeBtn { background-color: #007bff; color: white; }
+        .download-btn { background-color: #28a745; color: white; }
+        .download-btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .html-scrape-btn { background-color: #fd7e14; color: white; padding: 6px; font-size: 12px; }
+        .html-scrape-btn:hover { background-color: #e55100; }
+        #status { margin-top: 10px; font-style: italic; color: #555; text-align: left; }
+        h3 { margin: 6px 0 8px; }
+        /* Compact layout helpers */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .stack { display: grid; gap: 6px; }
+        .full { width: 100%; }
+        details.section { border: 1px solid #eee; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; text-align: left; }
+        details.section > summary { font-weight: 600; cursor: pointer; list-style: none; }
+        details.section > summary::-webkit-details-marker { display: none; }
+        details.section[open] { padding-bottom: 8px; }
+        .section { border: 1px solid #eee; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; text-align: left; }
+        .subtle { font-size: 12px; color: #666; margin: 2px 0 6px; }
+        textarea { width: 100%; height: 80px; padding: 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px; resize: vertical; }
+    </style>
+  <script type="module" crossorigin src="/popup.js"></script>
+</head>
+<body>
+    <h3>FAP Revamp Helper</h3>
+
+    <!-- Quick JSON scrape + downloads -->
+    <details class="section" open>
+        <summary>Cào Dữ Liệu JSON (Nhanh)</summary>
+        <p class="subtle">Cào Profile, Lịch Thi, Chương Trình Học và cho phép tải xuống.</p>
+        <div class="stack">
+            <button id="scrapeBtn">Cào Profile + Lịch Thi + Chương Trình Học</button>
+            <div class="stack">
+                <button id="downloadAllBtn" class="download-btn" disabled>Tải tất cả dữ liệu (JSON)</button>
+                <button id="downloadProfileBtn" class="download-btn" disabled>Tải Profile (JSON)</button>
+                <button id="downloadExamBtn" class="download-btn" disabled>Tải Lịch Thi (JSON)</button>
+                <button id="downloadCurriculumBtn" class="download-btn" disabled>Tải Chương Trình Học (JSON)</button>
+            </div>
+        </div>
+    </details>
+
+    <!-- Advanced JSON Scraping Section (always visible) -->
+    <div class="section">
+        <div class="stack" style="margin-top: 6px;">
+            <div>
+                <div class="subtle" style="font-weight:600;">Cào JSON Nâng Cao</div>
+                <p class="subtle">Lịch học tuần</p>
+                <button id="scrapeScheduleJSONBtn" style="background-color: #17a2b8; color: white;" class="full">Cào Lịch Tuần (JSON)</button>
+            </div>
+            <div>
+                <div class="subtle" style="font-weight:600;">Cào JSON Điểm</div>
+                <div class="stack" style="margin-top: 6px;">
+                    <textarea id="gradeUrlsInput" placeholder="Nhập các link môn học (mỗi link một dòng)&#10;Ví dụ:&#10;https://fap.fpt.edu.vn/Grade/StudentGrade.aspx?rollNumber=SE123456&term=Spring2025&course=PRF192&#10;https://fap.fpt.edu.vn/Grade/StudentGrade.aspx?rollNumber=SE123456&term=Spring2025&course=MAE101"></textarea>
+                    <button id="scrapeGradeJSONBtn" style="background-color: #6f42c1; color: white;" class="full">Cào Điểm (JSON)</button>
+                </div>
+            </div>
+            <div>
+                <div class="subtle" style="font-weight:600;">Cào JSON Điểm Danh</div>
+                <div class="stack" style="margin-top: 6px;">
+                    <textarea id="attendanceUrlsInput" placeholder="Nhập các link điểm danh (mỗi link một dòng)&#10;Ví dụ:&#10;https://fap.fpt.edu.vn/Report/ViewAttendstudent.aspx?id=SE123456&campus=HCM&term=Spring2025&course=PRF192&#10;https://fap.fpt.edu.vn/Report/ViewAttendstudent.aspx?id=SE123456&campus=HCM&term=Spring2025&course=MAE101"></textarea>
+                    <button id="scrapeAttendanceJSONBtn" style="background-color: #e83e8c; color: white;" class="full">Cào Điểm Danh (JSON)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <details class="section">
+        <summary>Cài đặt tự động</summary>
+        <div class="stack" style="margin-top: 6px;">
+            <label class="grid-2">
+                <span>Auto Scrape</span>
+                <input type="checkbox" id="autoScrapeEnabled" />
+            </label>
+            <label class="grid-2">
+                <span>Auto Upload</span>
+                <input type="checkbox" id="autoUploadEnabled" />
+            </label>
+            <label>
+                <div class="subtle">Upload Target URL</div>
+                <input id="uploadTargetUrl" class="full" type="text" placeholder="https://v0-web-app-logic.vercel.app/upload" />
+            </label>
+            <label>
+                <div class="subtle">Run intervals (hours)</div>
+                <div class="grid-2">
+                    <input id="phase1Hours" type="number" min="1" value="12" />
+                    <input id="phase2Hours" type="number" min="1" value="24" />
+                </div>
+                <div class="grid-2" style="margin-top:6px;">
+                    <span>Phase1</span>
+                    <span>Phase2/3</span>
+                </div>
+            </label>
+            <label>
+                <div class="subtle">Lưu link Điểm (mỗi dòng một link)</div>
+                <textarea id="settingsGradeUrls"></textarea>
+            </label>
+            <label>
+                <div class="subtle">Lưu link Điểm danh (mỗi dòng một link)</div>
+                <textarea id="settingsAttendanceUrls"></textarea>
+            </label>
+            <button id="saveSettingsBtn" class="full" style="background:#111;color:#fff;">Lưu cài đặt</button>
+            <div id="saveStatus" class="subtle"></div>
+        </div>
+    </details>
+
+    <p id="status">Sẵn sàng để bắt đầu cào dữ liệu.</p>
+
+</body>
+</html>

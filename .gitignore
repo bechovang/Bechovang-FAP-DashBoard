@@ -94,14 +94,6 @@ coverage
 # 2. CÁC FILE & THƯ MỤC BUILD CỤ THỂ
 # ===================================================================
 
-# Thư mục build của Extension (Vite)
-/extension/dist
-
-# Thư mục cache của Vite
-/extension/.vite
-
-# Thư mục build của Web App (Next.js)
-/webapp/.next
 
 # Thư mục xuất tĩnh của Web App (Next.js)
 /webapp/out
