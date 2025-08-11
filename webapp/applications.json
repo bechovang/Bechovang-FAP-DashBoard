@@ -1,0 +1,45 @@
+{
+  "lastUpdated": "2025-08-04T08:00:00Z",
+  "applications": [
+    {
+      "type": "Đề nghị cấp bảng điểm quá trình",
+      "purpose": "Xin cấp bảng điểm quá trình để chuyển đổi điểm.",
+      "createDate": "2025-04-22",
+      "processNote": "Sinh viên vui lòng đến P.202 nhận bảng điểm từ 15h00 ngày 23/04.",
+      "status": "Approved",
+      "processDate": "2025-04-22T16:30:12Z"
+    },
+    {
+      "type": "Đề nghị xem lại điểm thi",
+      "purpose": "Xin phúc khảo điểm thi môn MAE101.",
+      "createDate": "2025-06-10",
+      "processNote": "Điểm chấm là chính xác, không thay đổi.",
+      "status": "Rejected",
+      "processDate": "2025-06-12T10:05:00Z"
+    },
+    {
+      "type": "Đề nghị hoãn thi",
+      "purpose": "Xin hoãn thi PRF192 do lý do sức khỏe, có giấy xác nhận.",
+      "createDate": "2025-08-01",
+      "processNote": "Đang xem xét, vui lòng chờ thông báo.",
+      "status": "Pending",
+      "processDate": null
+    },
+    {
+      "type": "Đề nghị chuyển nhóm học",
+      "purpose": "Xin chuyển nhóm PRF192 từ SE2005 sang SE2010 vì xung đột lịch.",
+      "createDate": "2025-03-05",
+      "processNote": "Chấp nhận chuyển nhóm, hiệu lực từ tuần sau.",
+      "status": "Approved",
+      "processDate": "2025-03-06T09:45:20Z"
+    },
+    {
+      "type": "Các loại đơn khác",
+      "purpose": "Đăng ký học song song tiếng Anh 6 và chuyên ngành 1.",
+      "createDate": "2024-12-21",
+      "processNote": "Hiện chưa triển khai học song song, vui lòng hoàn thành tiếng Anh 6 trước.",
+      "status": "Rejected",
+      "processDate": "2024-12-23T16:12:56Z"
+    }
+  ]
+}

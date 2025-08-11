@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "FAP Revamp Helper",
+  "version": "0.1.0",
+  "description": "Cao du lieu tu FAP de hien thi tren Web App moi.",
+  "permissions": [
+    "storage",
+    "scripting",
+    "tabs",
+    "downloads",
+    "webNavigation",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://fap.fpt.edu.vn/*",
+    "https://v0-web-app-logic.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",         // Biên dịch ra phiên bản JS mới nhất
+      "module": "ESNext",         // Sử dụng module JS hiện đại
+      "moduleResolution": "node", // Cách TS tìm các module
+      "strict": true,             // Bật tất cả các quy tắc kiểm tra nghiêm ngặt
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "types": ["@types/chrome", "@types/node"] // Quan trọng: Khai báo các kiểu dữ liệu
+    },
+    "include": ["src/**/*.ts"] // Chỉ biên dịch các file .ts trong thư mục src
+  }

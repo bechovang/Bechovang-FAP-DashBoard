@@ -1,0 +1,233 @@
+{
+  "curriculum": {
+    "lastUpdated": "2025-08-10T13:53:56.087Z",
+    "programCode": "BIT_SE_20B",
+    "subjects": [
+      {
+        "subjectCode": "TRS501",
+        "subjectName": "English 5 (University success)",
+        "termNo": -1
+      },
+      {
+        "subjectCode": "ENT503",
+        "subjectName": "English 6 (Summit 2)",
+        "termNo": 0
+      },
+      {
+        "subjectCode": "VOV114",
+        "subjectName": "Vovinam 1",
+        "termNo": 0
+      },
+      {
+        "subjectCode": "VOV124",
+        "subjectName": "Vovinam 2",
+        "termNo": 0
+      },
+      {
+        "subjectCode": "VOV134",
+        "subjectName": "Vovinam 3",
+        "termNo": 0
+      },
+      {
+        "subjectCode": "TMI101",
+        "subjectName": "Traditional musical instrument",
+        "termNo": 0
+      },
+      {
+        "subjectCode": "OTP101",
+        "subjectName": "Orientation and General Training Program",
+        "termNo": 0
+      },
+      {
+        "subjectCode": "CSI106",
+        "subjectName": "Introduction to Computer Science",
+        "termNo": 1
+      },
+      {
+        "subjectCode": "PRF192",
+        "subjectName": "Programming Fundamentals",
+        "termNo": 1
+      },
+      {
+        "subjectCode": "MAE101",
+        "subjectName": "Mathematics for Engineering",
+        "termNo": 1
+      },
+      {
+        "subjectCode": "CEA201",
+        "subjectName": "Computer Organization and Architecture",
+        "termNo": 1
+      },
+      {
+        "subjectCode": "SSL101c",
+        "subjectName": "Academic Skills for University Success",
+        "termNo": 1
+      },
+      {
+        "subjectCode": "WED201c",
+        "subjectName": "Web Design",
+        "termNo": 2
+      },
+      {
+        "subjectCode": "PRO192",
+        "subjectName": "Object-Oriented Programming",
+        "termNo": 2
+      },
+      {
+        "subjectCode": "MAD101",
+        "subjectName": "Discrete mathematics",
+        "termNo": 2
+      },
+      {
+        "subjectCode": "OSG202",
+        "subjectName": "Operating Systems",
+        "termNo": 2
+      },
+      {
+        "subjectCode": "NWC204",
+        "subjectName": "Computer Networking",
+        "termNo": 2
+      },
+      {
+        "subjectCode": "CSD201",
+        "subjectName": "Data Structures and Algorithms",
+        "termNo": 3
+      },
+      {
+        "subjectCode": "DBI202",
+        "subjectName": "Database Systems",
+        "termNo": 3
+      },
+      {
+        "subjectCode": "MAS291",
+        "subjectName": "Statistics & Probability",
+        "termNo": 3
+      },
+      {
+        "subjectCode": "LAB211",
+        "subjectName": "OOP with Java Lab",
+        "termNo": 3
+      },
+      {
+        "subjectCode": "JPD113",
+        "subjectName": "Elementary Japanese 1- A1.1",
+        "termNo": 3
+      },
+      {
+        "subjectCode": "JPD123",
+        "subjectName": "Elementary Japanese 1-A1.2",
+        "termNo": 4
+      },
+      {
+        "subjectCode": "IOT102",
+        "subjectName": "Internet of Things",
+        "termNo": 4
+      },
+      {
+        "subjectCode": "PRJ301",
+        "subjectName": "Java Web application development",
+        "termNo": 4
+      },
+      {
+        "subjectCode": "SWE201c",
+        "subjectName": "Introduction to Software Engineering",
+        "termNo": 4
+      },
+      {
+        "subjectCode": "SSG104",
+        "subjectName": "Communication and In-Group Working Skills",
+        "termNo": 4
+      },
+      {
+        "subjectCode": "WDU203c",
+        "subjectName": "The UI/UX Design",
+        "termNo": 5
+      },
+      {
+        "subjectCode": "SWP391",
+        "subjectName": "Software development project",
+        "termNo": 5
+      },
+      {
+        "subjectCode": "SWR302",
+        "subjectName": "Software Requirements",
+        "termNo": 5
+      },
+      {
+        "subjectCode": "SWT301",
+        "subjectName": "Software Testing",
+        "termNo": 5
+      },
+      {
+        "subjectCode": "OJT202",
+        "subjectName": "On the job training",
+        "termNo": 6
+      },
+      {
+        "subjectCode": "ENW493c",
+        "subjectName": "Research Methods & Academic Writing Skills",
+        "termNo": 6
+      },
+      {
+        "subjectCode": "EXE101",
+        "subjectName": "Experiential Entrepreneurship 1",
+        "termNo": 7
+      },
+      {
+        "subjectCode": "SWD392",
+        "subjectName": "Software Architecture and Design",
+        "termNo": 7
+      },
+      {
+        "subjectCode": "PMG201c",
+        "subjectName": "Project Management",
+        "termNo": 7
+      },
+      {
+        "subjectCode": "ITE302c",
+        "subjectName": "Ethics in IT",
+        "termNo": 8
+      },
+      {
+        "subjectCode": "MLN122",
+        "subjectName": "Political economics of Marxism – Leninism",
+        "termNo": 8
+      },
+      {
+        "subjectCode": "MLN111",
+        "subjectName": "Philosophy of Marxism – Leninism",
+        "termNo": 8
+      },
+      {
+        "subjectCode": "EXE201",
+        "subjectName": "Experiential Entrepreneurship 2",
+        "termNo": 8
+      },
+      {
+        "subjectCode": "PRM392",
+        "subjectName": "Mobile Programming",
+        "termNo": 8
+      },
+      {
+        "subjectCode": "MLN131",
+        "subjectName": "Scientific socialism",
+        "termNo": 9
+      },
+      {
+        "subjectCode": "VNR202",
+        "subjectName": "History of Vietnam Communist Party",
+        "termNo": 9
+      },
+      {
+        "subjectCode": "HCM202",
+        "subjectName": "Ho Chi Minh Ideology",
+        "termNo": 9
+      },
+      {
+        "subjectCode": "SEP490",
+        "subjectName": "SE Capstone Project",
+        "termNo": 9
+      }
+    ]
+  }
+}
