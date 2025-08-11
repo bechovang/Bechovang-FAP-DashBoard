@@ -1,0 +1,271 @@
+"use client"
+
+import { BarChart3, TrendingUp, Target, Award, Calendar, BookOpen } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { useData } from "@/lib/data-context"
+
+export default function AnalyticsPage() {
+  const { grades, attendance, examSchedule } = useData()
+
+  if (!grades || !attendance) {
+    return (
+      <div className="flex flex-col">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <h1 className="text-lg font-semibold">Thống kê</h1>
+        </header>
+        <main className="flex-1 p-6">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">Không có dữ liệu để thống kê</p>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
+  // Calculate overall statistics
+  const allCourses = grades.semesters.flatMap((s) => s.courses)
+  const passedCourses = allCourses.filter((c) => c.status === "Passed")
+  const failedCourses = allCourses.filter((c) => c.status === "Failed")
+  const overallGPA =
+    passedCourses.length > 0 ? passedCourses.reduce((sum, c) => sum + c.average, 0) / passedCourses.length : 0
+
+  // Calculate semester GPAs
+  const semesterGPAs = grades.semesters.map((semester) => {
+    const semesterPassed = semester.courses.filter((c) => c.status === "Passed")
+    const gpa =
+      semesterPassed.length > 0 ? semesterPassed.reduce((sum, c) => sum + c.average, 0) / semesterPassed.length : 0
+    return {
+      term: semester.term,
+      gpa: gpa,
+      courses: semester.courses.length,
+      passed: semesterPassed.length,
+    }
+  })
+
+  // Calculate attendance statistics
+  const allAttendanceCourses = attendance.semesters.flatMap((s) => s.courses)
+  const averageAttendance =
+    allAttendanceCourses.length > 0
+      ? 100 - allAttendanceCourses.reduce((sum, c) => sum + c.absentPercentage, 0) / allAttendanceCourses.length
+      : 0
+
+  // Grade distribution
+  const gradeDistribution = {
+    excellent: passedCourses.filter((c) => c.average >= 8.5).length,
+    good: passedCourses.filter((c) => c.average >= 7.0 && c.average < 8.5).length,
+    fair: passedCourses.filter((c) => c.average >= 5.5 && c.average < 7.0).length,
+    pass: passedCourses.filter((c) => c.average >= 4.0 && c.average < 5.5).length,
+    fail: failedCourses.length,
+  }
+
+  const getGPAColor = (gpa: number) => {
+    if (gpa >= 8.5) return "text-green-600"
+    if (gpa >= 7.0) return "text-blue-600"
+    if (gpa >= 5.5) return "text-yellow-600"
+    if (gpa >= 4.0) return "text-orange-600"
+    return "text-red-600"
+  }
+
+  const getGPALevel = (gpa: number) => {
+    if (gpa >= 8.5) return "Xuất sắc"
+    if (gpa >= 7.0) return "Giỏi"
+    if (gpa >= 5.5) return "Khá"
+    if (gpa >= 4.0) return "Trung bình"
+    return "Yếu"
+  }
+
+  return (
+    <div className="flex flex-col">
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
+        <h1 className="text-lg font-semibold">Thống kê & Phân tích</h1>
+      </header>
+
+      <main className="flex-1 p-6 space-y-6">
+        {/* Overall Statistics */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">GPA Tổng</CardTitle>
+              <Award className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${getGPAColor(overallGPA)}`}>{overallGPA.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">{getGPALevel(overallGPA)}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tỷ lệ đậu</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {allCourses.length > 0 ? ((passedCourses.length / allCourses.length) * 100).toFixed(1) : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {passedCourses.length}/{allCourses.length} môn
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Điểm danh TB</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{averageAttendance.toFixed(1)}%</div>
+              <p className="text-xs text-muted-foreground">Tỷ lệ có mặt</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tổng môn học</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{allCourses.length}</div>
+              <p className="text-xs text-muted-foreground">Đã học</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Semester Progress */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Tiến độ theo học kỳ
+            </CardTitle>
+            <CardDescription>GPA và số môn đậu qua các học kỳ</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {semesterGPAs.map((semester, index) => (
+                <div key={index} className="flex items-center justify-between p-4 rounded-lg border">
+                  <div>
+                    <h3 className="font-medium">{semester.term}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {semester.passed}/{semester.courses} môn đậu
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-xl font-bold ${getGPAColor(semester.gpa)}`}>{semester.gpa.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{getGPALevel(semester.gpa)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Grade Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Phân bố điểm số
+            </CardTitle>
+            <CardDescription>Số lượng môn học theo từng mức điểm</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <span className="text-sm">Xuất sắc (8.5-10)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{gradeDistribution.excellent}</span>
+                  <Progress value={(gradeDistribution.excellent / allCourses.length) * 100} className="w-20" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                  <span className="text-sm">Giỏi (7.0-8.4)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{gradeDistribution.good}</span>
+                  <Progress value={(gradeDistribution.good / allCourses.length) * 100} className="w-20" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                  <span className="text-sm">Khá (5.5-6.9)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{gradeDistribution.fair}</span>
+                  <Progress value={(gradeDistribution.fair / allCourses.length) * 100} className="w-20" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                  <span className="text-sm">Trung bình (4.0-5.4)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{gradeDistribution.pass}</span>
+                  <Progress value={(gradeDistribution.pass / allCourses.length) * 100} className="w-20" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded"></div>
+                  <span className="text-sm">Rớt (&lt;4.0)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{gradeDistribution.fail}</span>
+                  <Progress value={(gradeDistribution.fail / allCourses.length) * 100} className="w-20" />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recommendations */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-blue-800">Gợi ý cải thiện</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              {overallGPA < 6.5 && (
+                <p className="text-blue-700">
+                  • GPA hiện tại thấp, hãy tập trung vào việc cải thiện điểm số các môn sắp tới
+                </p>
+              )}
+              {averageAttendance < 90 && (
+                <p className="text-blue-700">
+                  • Tỷ lệ điểm danh cần cải thiện, hãy cố gắng tham gia đầy đủ các buổi học
+                </p>
+              )}
+              {failedCourses.length > 0 && (
+                <p className="text-blue-700">
+                  • Có {failedCourses.length} môn chưa đậu, cần lên kế hoạch học lại hoặc cải thiện
+                </p>
+              )}
+              {overallGPA >= 8.0 && (
+                <p className="text-blue-700">• Kết quả học tập rất tốt! Hãy duy trì phong độ này</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  )
+}
