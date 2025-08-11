@@ -1,228 +1,140 @@
-## Bechovang FAP Dashboard — Web App & Browser Extension
 
-A monorepo containing:
-- Web application (Next.js) for visualizing FAP data
-- Browser extension (Vite + TypeScript) for scraping data from the FPT Academic Portal (FAP)
+## **Bechovang FAP Dashboard — Hướng dẫn sử dụng**
 
----
+Đây là dự án bao gồm một ứng dụng web và một tiện ích mở rộng cho trình duyệt, giúp bạn xem và phân tích dữ liệu học tập từ FAP một cách trực quan và tiện lợi.
 
-## Contents
-- Project Structure
-- Requirements
-- Quick Start (Windows PowerShell)
-- Web App (Next.js)
-- Browser Extension (Vite)
-- Workflow: Scrape with Extension → Import into Web App
-- Troubleshooting
-- Notes
+### **Mục lục**
+1.  [Tổng quan & Cấu trúc Dự án](#1-tổng-quan--cấu-trúc-dự-án)
+2.  [Yêu cầu Hệ thống](#2-yêu-cầu-hệ-thống)
+3.  [Quy trình Sử dụng Chính (Dành cho người dùng)](#3-quy-trình-sử-dụng-chính-dành-cho-người-dùng)
+4.  [Hướng dẫn Cài đặt cho Nhà phát triển (Developer)](#4-hướng-dẫn-cài-đặt-cho-nhà-phát-triển-developer)
+5.  [Khắc phục các Sự cố Thường gặp](#5-khắc-phục-các-sự-cố-thường-gặp)
 
 ---
 
-## Project Structure
-```
-Bechovang-FAP-DashBoard/
-  exetension/            # Browser extension source (Vite + TS)
-  webapp/                # Next.js 15 web app (React 19 + Tailwind 4)
-  docs/                  # Planning docs
-```
+### **1. Tổng quan & Cấu trúc Dự án**
+
+Dự án này là một *monorepo* (một kho mã nguồn chứa nhiều dự án con), bao gồm:
+
+*   **`webapp/`**: Ứng dụng web được xây dựng bằng Next.js 15, React 19 và Tailwind 4. Đây là nơi bạn sẽ xem các biểu đồ và bảng biểu dữ liệu của mình.
+*   **`exetension/`**: Tiện ích mở rộng (extension) cho trình duyệt Chrome/Edge, được xây dựng bằng Vite và TypeScript. Công cụ này có nhiệm vụ "cào" (lấy) dữ liệu từ trang FAP.
+*   **`docs/`**: Chứa các tài liệu về kế hoạch và thiết kế của dự án.
+
+Mô hình hoạt động rất đơn giản: **Dùng Extension để lấy dữ liệu từ FAP → Tải dữ liệu lên Web App để xem.**
+
+### **2. Yêu cầu Hệ thống**
+
+Để có thể chạy dự án trên máy tính của bạn (dành cho developer), bạn cần có:
+
+*   **Node.js**: Phiên bản 20 LTS (khuyến nghị) hoặc tối thiểu là 18.18.
+*   **npm**: Phiên bản 9 trở lên (hoặc các trình quản lý gói khác như `yarn`, `pnpm`).
+*   **Trình duyệt**: Google Chrome hoặc Microsoft Edge để cài đặt và sử dụng extension.
+
+### **3. Quy trình Sử dụng Chính (Dành cho người dùng)**
+
+Nếu bạn chỉ muốn sử dụng, hãy làm theo các bước sau. Bạn không cần cài đặt phức tạp, chỉ cần cài extension và dùng web app có sẵn.
+
+#### **Bước 1: Cài đặt Tiện ích mở rộng (Extension)**
+
+Bạn cần phải tự build và cài đặt extension vào trình duyệt.
+
+1.  **Tải mã nguồn:** Tải về toàn bộ dự án này (dưới dạng file ZIP) và giải nén ra một thư mục bất kỳ.
+2.  **Build Extension:**
+    *   Mở **PowerShell** (hoặc Terminal) trên máy tính của bạn.
+    *   Di chuyển vào thư mục `exetension` bằng lệnh:
+        ```powershell
+        cd "đường/dẫn/đến/Bechovang-FAP-DashBoard/exetension"
+        ```
+    *   Chạy các lệnh sau để build extension:
+        ```powershell
+        npm install
+        npm run build
+        ```
+    *   Sau khi chạy xong, một thư mục mới tên là `dist` sẽ được tạo ra bên trong thư mục `exetension`. Đây chính là extension đã sẵn sàng để cài đặt.
+
+3.  **Cài Extension vào Trình duyệt:**
+    *   Mở trình duyệt Chrome hoặc Edge.
+    *   Đi đến trang quản lý tiện ích bằng cách gõ `chrome://extensions` vào thanh địa chỉ và nhấn Enter.
+    *   Ở góc trên bên phải, gạt nút **"Chế độ dành cho nhà phát triển" (Developer mode)** sang **Bật**.
+    *   Một loạt nút mới sẽ hiện ra. Nhấn vào nút **"Tải tiện ích đã giải nén" (Load unpacked)**.
+    *   Một cửa sổ chọn thư mục sẽ hiện lên. Bạn hãy tìm và chọn đúng thư mục `exetension/dist` vừa được tạo ở trên.
+    *   Nếu thành công, bạn sẽ thấy icon của extension xuất hiện trên thanh công cụ của trình duyệt.
+
+#### **Bước 2: Lấy dữ liệu từ FAP**
+
+1.  Đăng nhập vào trang FPT Academic Portal (`https://fap.fpt.edu.vn`) như bình thường.
+2.  Sau khi đăng nhập thành công, nhấn vào biểu tượng của extension trên thanh công cụ để mở popup.
+3.  Trong popup, bạn sẽ thấy các nút để cào từng loại dữ liệu:
+    *   Cào thông tin cá nhân (Profile)
+    *   Cào lịch thi (Exams)
+    *   Cào chương trình học (Curriculum)
+    *   Cào lịch học tuần (Schedule)
+    *   Cào điểm (Grades)
+    *   Cào điểm danh (Attendance)
+4.  Nhấn vào các nút tương ứng. Extension sẽ tự động làm việc và trình duyệt sẽ tải về các file dữ liệu có đuôi `.json` (ví dụ: `schedule.json`, `grades.json`...). Hãy lưu các file này vào một thư mục dễ nhớ.
+
+#### **Bước 3: Xem dữ liệu trên Web App**
+
+1.  Mở trình duyệt và truy cập vào địa chỉ: **[https://v0-web-app-logic.vercel.app/](https://v0-web-app-logic.vercel.app/)**
+2.  Điều hướng đến trang `/upload`.
+3.  Kéo và thả các file `.json` bạn vừa tải về ở Bước 2 vào khu vực tải lên.
+4.  Sau khi tải lên thành công, bạn có thể bắt đầu khám phá dữ liệu của mình qua các trang như "Điểm số" (`/grades`), "Lịch học" (`/schedule`), "Phân tích" (`/analytics`),...
 
 ---
 
-## Requirements
-- Node.js 20 LTS (recommended) or >= 18.18
-- npm 9+ (or your preferred package manager)
-- Google Chrome or Microsoft Edge for loading the extension
+### **4. Hướng dẫn Cài đặt cho Nhà phát triển (Developer)**
+
+Nếu bạn muốn tùy chỉnh hoặc phát triển thêm tính năng, hãy làm theo các bước sau để chạy dự án trên máyローカルcủa bạn.
+
+#### **Chạy Ứng dụng Web (Web App):**
+
+1.  Mở PowerShell/Terminal.
+2.  Di chuyển vào thư mục `webapp`:
+    ```powershell
+    cd "đường/dẫn/đến/Bechovang-FAP-DashBoard/webapp"
+    ```
+3.  Cài đặt các gói phụ thuộc:
+    ```powershell
+    npm install
+    ```
+4.  Khởi động server phát triển:
+    ```powershell
+    npm run dev
+    ```
+5.  Mở trình duyệt và truy cập `http://localhost:3000` để xem ứng dụng.
+
+#### **Build và Theo dõi thay đổi của Extension:**
+
+1.  Mở một cửa sổ PowerShell/Terminal khác.
+2.  Di chuyển vào thư mục `exetension`:
+    ```powershell
+    cd "đường/dẫn/đến/Bechovang-FAP-DashBoard/exetension"
+    ```3.  Cài đặt các gói phụ thuộc (nếu chưa làm):
+    ```powershell
+    npm install
+    ```
+4.  Chạy chế độ "watch" để tự động build lại mỗi khi bạn sửa code:
+    ```powershell
+    npm run dev
+    ```
+5.  Sau đó, bạn chỉ cần nạp thư mục `exetension/dist` vào trình duyệt như hướng dẫn ở trên. Mỗi khi bạn sửa code, extension sẽ tự động được cập nhật. Bạn chỉ cần nhấn nút "Tải lại" trên trang `chrome://extensions` để áp dụng thay đổi.
 
 ---
 
-## Quick Start (Windows PowerShell)
-- Install and run Web App (dev):
-  ```powershell
-  cd "webapp"
-  npm install
-  npm run dev
-  # Open http://localhost:3000
-  ```
-- Build and load Extension:
-  ```powershell
-  cd "exetension"
-  npm install
-  npm run build
-  # In Chrome/Edge: chrome://extensions → Enable Developer mode → Load unpacked → select exetension/dist
-  ```
+### **5. Khắc phục các Sự cố Thường gặp**
 
----
+*   **Không cài được extension?**
+    *   Hãy chắc chắn rằng bạn đã chọn đúng thư mục `exetension/dist`, không phải thư mục gốc `exetension`.
+    *   Đảm bảo "Chế độ dành cho nhà phát triển" đã được bật.
 
-## Web App (Next.js)
-- Framework: Next.js 15, React 19, Tailwind CSS 4
-- Location: `webapp/`
-- Scripts:
-  - `npm run dev` — start development server
-  - `npm run build` — production build
-  - `npm run start` — start production server after build
-  - `npm run lint` — lint (disabled during build in config)
-- Config highlights:
-  - `next.config.mjs`: ignores TypeScript and ESLint errors during build; images unoptimized
-- Key routes/pages (app router):
-  - `/` Dashboard
-  - `/schedule` Weekly schedule
-  - `/grades` Grades
-  - `/attendance` Attendance
-  - `/curriculum` Curriculum
-  - `/exams` Exams
-  - `/analytics` Analytics
-  - `/settings` Settings
-  - `/upload` Upload JSON data
-  - `/guide` Guide
+*   **Lỗi khi build (npm install / npm run build)?**
+    *   Kiểm tra lại phiên bản Node.js của bạn, nên dùng bản 20 LTS.
+    *   Thử xóa thư mục `node_modules` và file `package-lock.json`, sau đó chạy lại `npm install`.
 
-### Importing Data
-- From the extension, you will get JSON files for schedule/grades/attendance/curriculum/…
-- Two ways to load data into the app:
-  1) Use the in-app uploader: go to `/upload` and drop your JSON files
-  2) Place files into `webapp/public/data/` and adjust components to load from there if needed
+*   **Web App không hiển thị gì (trang trắng)?**
+    *   Nhấn F12 để mở DevTools và kiểm tra tab Console xem có lỗi gì không.
+    *   Đảm bảo cấu trúc file JSON bạn tải lên khớp với cấu trúc mà các thành phần của web app mong đợi.
+    *   Luôn thử tải dữ liệu qua trang `/upload` trước.
 
----
-
-## Browser Extension (Vite)
-- Tech: Vite 7 + TypeScript
-- Location: `exetension/`
-- Scripts:
-  - `npm run build` — build extension to `exetension/dist`
-  - `npm run dev` — rebuild on file changes (watch)
-- Build config: `exetension/vite.config.ts` (copies `manifest.json`, icons, and popup)
-- Entry points include content scripts like:
-  - `content-scripts/fap-scraper.ts`
-  - `content-scripts/fap-curriculum-scraper.ts`
-  - `content-scripts/fap-profile-scraper.ts`
-  - `content-scripts/html-scraper.ts`
-  - `content-scripts/fap-schedule-scraper.ts`
-  - `content-scripts/schedule-json-scraper.ts`
-  - `content-scripts/grade-json-scraper.ts` (handles Bonus rows)
-  - `content-scripts/attendance-json-scraper.ts`
-
-### Load the Extension
-1) Build: `npm run build` in `exetension`
-2) Chrome/Edge → `chrome://extensions/`
-3) Enable Developer mode
-4) Load unpacked → choose `exetension/dist`
-
-### Using the Extension
-- Log in to `https://fap.fpt.edu.vn`
-- Open the extension popup
-- Choose scraping tasks (profile, exams, curriculum, schedule, grades, attendance) or universal HTML scrape
-- Data is downloaded as JSON files with smart filenames
-
----
-
-## Workflow: Scrape with Extension → Import into Web App
-1) Use the extension to scrape data from FAP
-2) Download JSON files (e.g., schedule, grades, attendance, curriculum)
-3) Open the web app at `http://localhost:3000`
-4) Navigate to `/upload` and drop the JSON files
-5) Explore dashboards: `/grades`, `/schedule`, `/attendance`, `/analytics`, etc.
-
----
-
-## Troubleshooting
-- Extension not loading: ensure you selected `exetension/dist` (not `exetension` root)
-- Build errors:
-  - Use Node 20+ LTS
-  - Delete `node_modules` and lockfiles, then reinstall: `npm ci` or `npm install`
-- Web app blank UI:
-  - Check console errors
-  - Ensure JSON structure matches what components expect
-  - Try uploading via `/upload`
-- Grades Bonus rows:
-  - Extension script `grade-json-scraper.ts` handles Bonus rows and separates `<tbody>`/`<tfoot>` parsing
-
----
-
-## Notes
-- No environment variables are required by default
-- Data may contain personal information; store and share responsibly
-- This repository includes planning docs under `docs/`
-
----
-
-## Phiên bản Tiếng Việt
-
-### Tổng quan
-Monorepo gồm:
-- Ứng dụng web (Next.js) để hiển thị dữ liệu FAP
-- Tiện ích trình duyệt (Vite + TypeScript) để cào dữ liệu từ FAP
-
-### Cấu trúc
-```
-Bechovang-FAP-DashBoard/
-  exetension/            # Extension trình duyệt
-  webapp/                # Ứng dụng web Next.js 15 (React 19 + Tailwind 4)
-  docs/                  # Tài liệu kế hoạch
-```
-
-### Yêu cầu
-- Node.js 20 LTS (khuyến nghị) hoặc >= 18.18
-- npm 9+
-- Chrome/Edge để nạp extension
-
-### Bắt đầu nhanh (Windows PowerShell)
-- Ứng dụng web (dev):
-  ```powershell
-  cd "webapp"
-  npm install
-  npm run dev
-  # Mở http://localhost:3000
-  ```
-- Extension:
-  ```powershell
-  cd "exetension"
-  npm install
-  npm run build
-  # Chrome/Edge: chrome://extensions → Bật Developer mode → Load unpacked → chọn exetension/dist
-  ```
-
-### Ứng dụng web (Next.js)
-- Thư mục: `webapp/`
-- Lệnh:
-  - `npm run dev` — chạy dev server
-  - `npm run build` — build production
-  - `npm run start` — chạy server production sau khi build
-- Trang chính:
-  - `/` Bảng điều khiển
-  - `/schedule`, `/grades`, `/attendance`, `/curriculum`, `/exams`, `/analytics`, `/settings`, `/upload`, `/guide`
-
-#### Nhập dữ liệu
-- Sử dụng extension để tải về các file JSON
-- Tải lên tại `/upload` hoặc đặt file vào `webapp/public/data/` nếu cần tùy biến
-
-### Extension (Vite)
-- Thư mục: `exetension/`
-- Lệnh:
-  - `npm run build` — build ra `exetension/dist`
-  - `npm run dev` — build watch
-- Cách nạp extension:
-  1) Build
-  2) Mở `chrome://extensions/`
-  3) Bật Developer mode
-  4) Load unpacked → chọn `exetension/dist`
-- Sử dụng:
-  - Đăng nhập `https://fap.fpt.edu.vn`
-  - Mở popup → chọn chức năng cào JSON/HTML
-  - Tự động tải về file JSON
-
-### Quy trình làm việc
-1) Cào dữ liệu bằng extension
-2) Tải JSON về máy
-3) Mở web app tại `http://localhost:3000`
-4) Vào `/upload` để tải JSON lên
-5) Xem dữ liệu ở các trang `/grades`, `/schedule`, `/attendance`, `/analytics`, …
-
-### Khắc phục sự cố
-- Không nạp được extension: chắc chắn đã chọn đúng thư mục `exetension/dist`
-- Lỗi build: dùng Node 20+, xoá `node_modules` + file lock rồi cài lại
-- Web app trắng: kiểm tra console, đảm bảo cấu trúc JSON đúng, thử tải lên qua `/upload`
-- Điểm Bonus: script `grade-json-scraper.ts` đã xử lý Bonus và tách parse `<tbody>`/`<tfoot>`
-
-### Lưu ý
-- Không yêu cầu biến môi trường mặc định
-- Cẩn trọng với dữ liệu cá nhân
-- Tài liệu trong thư mục `docs/` 
+*   **Điểm Bonus không hiển thị?**
+    *   Script `grade-json-scraper.ts` trong extension đã được thiết kế để xử lý các hàng điểm "Bonus". Nếu có vấn đề, hãy kiểm tra lại cấu trúc HTML của trang điểm trên FAP xem có gì thay đổi không.
