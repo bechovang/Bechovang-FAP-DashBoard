@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useData } from "@/lib/data-context"
+import { evaluateCourse, getCourseMode, type CourseCalcMode } from "@/lib/grade-utils"
 
 export default function AnalyticsPage() {
-  const { grades, attendance, examSchedule } = useData()
+  const { grades, attendance } = useData()
 
   if (!grades || !attendance) {
     return (
@@ -28,41 +29,63 @@ export default function AnalyticsPage() {
     )
   }
 
-  // Calculate overall statistics
-  const allCourses = grades.semesters.flatMap((s) => s.courses)
-  const passedCourses = allCourses.filter((c) => c.status === "Passed")
-  const failedCourses = allCourses.filter((c) => c.status === "Failed")
-  const overallGPA =
-    passedCourses.length > 0 ? passedCourses.reduce((sum, c) => sum + c.average, 0) / passedCourses.length : 0
+  // Build derived course evaluations once
+  const derivedAll = grades.semesters.flatMap((s) =>
+    (s.courses ?? []).map((c) => {
+      const evalc = evaluateCourse({
+        subjectCode: c.subjectCode,
+        subjectName: c.subjectName,
+        gradeDetails: c.gradeDetails ?? [],
+        average: c.average ?? null,
+      })
+      const mode = getCourseMode(c.subjectCode) as CourseCalcMode
+      return { term: s.term, course: c, evalc, mode }
+    }),
+  )
 
-  // Calculate semester GPAs
-  const semesterGPAs = grades.semesters.map((semester) => {
-    const semesterPassed = semester.courses.filter((c) => c.status === "Passed")
-    const gpa =
-      semesterPassed.length > 0 ? semesterPassed.reduce((sum, c) => sum + c.average, 0) / semesterPassed.length : 0
+  // Overall stats
+  const considered = derivedAll.filter((x) => x.mode !== "ignore" && x.evalc.complete)
+  const passedCourses = considered.filter((x) => x.evalc.passed)
+  const failedCourses = considered.filter((x) => !x.evalc.passed)
+
+  // GPA overall: only GPA-mode courses that are complete and passed
+  const gpaConsider = derivedAll.filter((x) => x.mode === "gpa" && x.evalc.complete && x.evalc.passed)
+  const overallGPA =
+    gpaConsider.length > 0 ? gpaConsider.reduce((s, x) => s + x.evalc.overall, 0) / gpaConsider.length : 0
+
+  // Semester GPAs and pass counts
+  const terms = Array.from(new Set(derivedAll.map((x) => x.term)))
+  const semesterGPAs = terms.map((term) => {
+    const inTerm = derivedAll.filter((x) => x.term === term)
+    const inTermConsidered = inTerm.filter((x) => x.mode !== "ignore" && x.evalc.complete)
+    const inTermPassed = inTermConsidered.filter((x) => x.evalc.passed)
+    const inTermGPA = inTerm
+      .filter((x) => x.mode === "gpa" && x.evalc.complete && x.evalc.passed)
+      .map((x) => x.evalc.overall)
+    const gpa = inTermGPA.length ? inTermGPA.reduce((a, b) => a + b, 0) / inTermGPA.length : 0
     return {
-      term: semester.term,
-      gpa: gpa,
-      courses: semester.courses.length,
-      passed: semesterPassed.length,
+      term,
+      gpa,
+      courses: inTermConsidered.length,
+      passed: inTermPassed.length,
     }
   })
 
-  // Calculate attendance statistics
+  // Attendance stats
   const allAttendanceCourses = attendance.semesters.flatMap((s) => s.courses)
   const averageAttendance =
     allAttendanceCourses.length > 0
       ? 100 - allAttendanceCourses.reduce((sum, c) => sum + c.absentPercentage, 0) / allAttendanceCourses.length
       : 0
 
-  // Grade distribution
-  const gradeDistribution = {
-    excellent: passedCourses.filter((c) => c.average >= 8.5).length,
-    good: passedCourses.filter((c) => c.average >= 7.0 && c.average < 8.5).length,
-    fair: passedCourses.filter((c) => c.average >= 5.5 && c.average < 7.0).length,
-    pass: passedCourses.filter((c) => c.average >= 4.0 && c.average < 5.5).length,
-    fail: failedCourses.length,
-  }
+  // Grade distribution over GPA courses only
+  const gpaComplete = derivedAll.filter((x) => x.mode === "gpa" && x.evalc.complete)
+  const excellent = gpaComplete.filter((x) => x.evalc.overall >= 8.5).length
+  const good = gpaComplete.filter((x) => x.evalc.overall >= 7.0 && x.evalc.overall < 8.5).length
+  const fair = gpaComplete.filter((x) => x.evalc.overall >= 5.5 && x.evalc.overall < 7.0).length
+  const pass = gpaComplete.filter((x) => x.evalc.overall >= 4.0 && x.evalc.overall < 5.5).length
+  const fail = gpaComplete.filter((x) => x.evalc.overall < 4.0).length
+  const allCoursesCount = gpaComplete.length
 
   const getGPAColor = (gpa: number) => {
     if (gpa >= 8.5) return "text-green-600"
@@ -108,10 +131,10 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {allCourses.length > 0 ? ((passedCourses.length / allCourses.length) * 100).toFixed(1) : 0}%
+                {considered.length > 0 ? ((passedCourses.length / considered.length) * 100).toFixed(1) : 0}%
               </div>
               <p className="text-xs text-muted-foreground">
-                {passedCourses.length}/{allCourses.length} môn
+                {passedCourses.length}/{considered.length} môn
               </p>
             </CardContent>
           </Card>
@@ -129,12 +152,12 @@ export default function AnalyticsPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng môn học</CardTitle>
+              <CardTitle className="text-sm font-medium">Tổng môn học (GPA)</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{allCourses.length}</div>
-              <p className="text-xs text-muted-foreground">Đã học</p>
+              <div className="text-2xl font-bold">{allCoursesCount}</div>
+              <p className="text-xs text-muted-foreground">Đã có điểm đầy đủ</p>
             </CardContent>
           </Card>
         </div>
@@ -146,7 +169,7 @@ export default function AnalyticsPage() {
               <TrendingUp className="h-5 w-5" />
               Tiến độ theo học kỳ
             </CardTitle>
-            <CardDescription>GPA và số môn đậu qua các học kỳ</CardDescription>
+            <CardDescription>GPA (chỉ môn Tính GPA) và số môn đậu (bỏ môn Bỏ khỏi tính)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -173,9 +196,9 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Phân bố điểm số
+              Phân bố điểm số (môn Tính GPA)
             </CardTitle>
-            <CardDescription>Số lượng môn học theo từng mức điểm</CardDescription>
+            <CardDescription>Số lượng môn theo từng mức điểm</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -185,8 +208,8 @@ export default function AnalyticsPage() {
                   <span className="text-sm">Xuất sắc (8.5-10)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{gradeDistribution.excellent}</span>
-                  <Progress value={(gradeDistribution.excellent / allCourses.length) * 100} className="w-20" />
+                  <span className="text-sm font-medium">{excellent}</span>
+                  <Progress value={allCoursesCount ? (excellent / allCoursesCount) * 100 : 0} className="w-20" />
                 </div>
               </div>
 
@@ -196,8 +219,8 @@ export default function AnalyticsPage() {
                   <span className="text-sm">Giỏi (7.0-8.4)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{gradeDistribution.good}</span>
-                  <Progress value={(gradeDistribution.good / allCourses.length) * 100} className="w-20" />
+                  <span className="text-sm font-medium">{good}</span>
+                  <Progress value={allCoursesCount ? (good / allCoursesCount) * 100 : 0} className="w-20" />
                 </div>
               </div>
 
@@ -207,8 +230,8 @@ export default function AnalyticsPage() {
                   <span className="text-sm">Khá (5.5-6.9)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{gradeDistribution.fair}</span>
-                  <Progress value={(gradeDistribution.fair / allCourses.length) * 100} className="w-20" />
+                  <span className="text-sm font-medium">{fair}</span>
+                  <Progress value={allCoursesCount ? (fair / allCoursesCount) * 100 : 0} className="w-20" />
                 </div>
               </div>
 
@@ -218,8 +241,8 @@ export default function AnalyticsPage() {
                   <span className="text-sm">Trung bình (4.0-5.4)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{gradeDistribution.pass}</span>
-                  <Progress value={(gradeDistribution.pass / allCourses.length) * 100} className="w-20" />
+                  <span className="text-sm font-medium">{pass}</span>
+                  <Progress value={allCoursesCount ? (pass / allCoursesCount) * 100 : 0} className="w-20" />
                 </div>
               </div>
 
@@ -229,8 +252,8 @@ export default function AnalyticsPage() {
                   <span className="text-sm">Rớt (&lt;4.0)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{gradeDistribution.fail}</span>
-                  <Progress value={(gradeDistribution.fail / allCourses.length) * 100} className="w-20" />
+                  <span className="text-sm font-medium">{fail}</span>
+                  <Progress value={allCoursesCount ? (fail / allCoursesCount) * 100 : 0} className="w-20" />
                 </div>
               </div>
             </div>

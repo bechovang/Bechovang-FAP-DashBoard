@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, Clock, GraduationCap, AlertTriangle, Upload } from "lucide-react"
+import { Calendar, GraduationCap, AlertTriangle, Upload } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -10,6 +10,36 @@ import { format, parseISO, addDays } from "date-fns"
 import { vi } from "date-fns/locale"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { evaluateCourse, getCourseMode, type CourseCalcMode } from "@/lib/grade-utils"
+
+function seasonOrder(seasonRaw: string) {
+  const s = (seasonRaw || "").toLowerCase()
+  if (s.startsWith("spring")) return 1
+  if (s.startsWith("summer")) return 2
+  if (s.startsWith("fall") || s.startsWith("autumn")) return 3
+  // fallback: không nhận diện -> nhỏ nhất
+  return 0
+}
+
+function parseTerm(term: string) {
+  // Hỗ trợ "Fall2024" hoặc "Fall 2024"
+  const season = (term.match(/[A-Za-z]+/)?.[0] ?? "").trim()
+  const year = Number.parseInt(term.match(/\d{4}/)?.[0] ?? "0", 10)
+  return { year, seasonIdx: seasonOrder(season) }
+}
+
+function isTermAGreater(a: string, b: string) {
+  const pa = parseTerm(a)
+  const pb = parseTerm(b)
+  if (pa.year !== pb.year) return pa.year > pb.year
+  return pa.seasonIdx > pb.seasonIdx
+}
+
+function latestSemesterByTerm<T extends { term: string }>(items: T[] | undefined | null): T | null {
+  const arr = Array.isArray(items) ? items : []
+  if (arr.length === 0) return null
+  return arr.reduce((best, cur) => (isTermAGreater(cur.term, best.term) ? cur : best), arr[0]!)
+}
 
 export function Dashboard() {
   const { profile, schedule, examSchedule, grades, attendance } = useData()
@@ -36,7 +66,6 @@ export function Dashboard() {
     const nextWeek = addDays(today, 7)
     return exams
       .map((exam) => {
-        // Expect dd/MM/yyyy; convert to yyyy-MM-dd for parseISO
         const parts = typeof exam.date === "string" ? exam.date.split("/") : []
         const iso = parts.length === 3 ? [parts[2], parts[1], parts[0]].join("-") : ""
         const dateObj = iso ? parseISO(iso) : null
@@ -49,20 +78,59 @@ export function Dashboard() {
       .map((x) => x.exam)
   }
 
+  // New derived metrics that follow the Grades logic (resit, bonus, course modes)
+  const deriveAllCourses = () => {
+    const semesters = grades?.semesters ?? []
+    return semesters.flatMap((s) =>
+      (s.courses ?? []).map((c) => {
+        const evalc = evaluateCourse({
+          subjectCode: c.subjectCode,
+          subjectName: c.subjectName,
+          gradeDetails: c.gradeDetails ?? [],
+          average: c.average ?? null,
+        })
+        const mode = getCourseMode(c.subjectCode) as CourseCalcMode
+        return { course: c, evalc, mode }
+      }),
+    )
+  }
+
   const getCurrentSemesterGPA = () => {
     const semesters = grades?.semesters
     if (!Array.isArray(semesters) || semesters.length === 0) return 0
-    const currentSemester = semesters[semesters.length - 1]
-    const courses = Array.isArray(currentSemester?.courses) ? currentSemester.courses : []
-    const passedCourses = courses.filter((c) => c.status === "Passed")
-    if (passedCourses.length === 0) return 0
-    return passedCourses.reduce((s, c) => s + (typeof c.average === "number" ? c.average : 0), 0) / passedCourses.length
+    const current = latestSemesterByTerm(semesters)
+    if (!current) return 0
+    const derived = (current.courses ?? []).map((c) => ({
+      course: c,
+      evalc: evaluateCourse({
+        subjectCode: c.subjectCode,
+        subjectName: c.subjectName,
+        gradeDetails: c.gradeDetails ?? [],
+        average: c.average ?? null,
+      }),
+      mode: getCourseMode(c.subjectCode) as CourseCalcMode,
+    }))
+    const gpaPassed = derived.filter((x) => x.mode === "gpa" && x.evalc.complete && x.evalc.passed)
+    if (gpaPassed.length === 0) return 0
+    const sum = gpaPassed.reduce((s, x) => s + x.evalc.overall, 0)
+    return sum / gpaPassed.length
+  }
+
+  const getPassWarningsCount = () => {
+    const derived = deriveAllCourses()
+    const considered = derived.filter((x) => x.mode !== "ignore" && x.evalc.complete)
+    const failed = considered.filter((x) => !x.evalc.passed)
+    return {
+      consideredCount: considered.length,
+      failedCount: failed.length,
+      passedCount: considered.length - failed.length,
+    }
   }
 
   const getAttendanceWarnings = () => {
     const sems = attendance?.semesters
     if (!Array.isArray(sems) || sems.length === 0) return []
-    const currentSemester = sems[sems.length - 1]
+    const currentSemester = latestSemesterByTerm(sems)
     const courses = Array.isArray(currentSemester?.courses) ? currentSemester.courses : []
     return courses.filter((c) => typeof c.absentPercentage === "number" && c.absentPercentage > 10)
   }
@@ -109,6 +177,7 @@ export function Dashboard() {
   const upcomingExams = getUpcomingExams()
   const currentGPA = getCurrentSemesterGPA()
   const attendanceWarnings = getAttendanceWarnings()
+  const passStats = getPassWarningsCount()
 
   return (
     <div className="flex flex-col">
@@ -138,23 +207,30 @@ export function Dashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tỷ lệ đậu</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {passStats.consideredCount > 0
+                  ? ((passStats.passedCount / passStats.consideredCount) * 100).toFixed(1)
+                  : 0}
+                %
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {passStats.passedCount}/{passStats.consideredCount} môn
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Lớp hôm nay</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{todaySchedule.length}</div>
               <p className="text-xs text-muted-foreground">Tiết học</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Thi sắp tới</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{upcomingExams.length}</div>
-              <p className="text-xs text-muted-foreground">Trong 7 ngày tới</p>
             </CardContent>
           </Card>
 
@@ -170,6 +246,7 @@ export function Dashboard() {
           </Card>
         </div>
 
+        {/* rest of dashboard unchanged */}
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
