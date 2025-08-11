@@ -71,6 +71,46 @@
         </div>
     </div>
 
+    <!-- Settings Section -->
+    <details class="section">
+        <summary>Cài đặt tự động</summary>
+        <div class="stack" style="margin-top: 6px;">
+            <label class="grid-2">
+                <span>Auto Scrape</span>
+                <input type="checkbox" id="autoScrapeEnabled" />
+            </label>
+            <label class="grid-2">
+                <span>Auto Upload</span>
+                <input type="checkbox" id="autoUploadEnabled" />
+            </label>
+            <label>
+                <div class="subtle">Upload Target URL</div>
+                <input id="uploadTargetUrl" class="full" type="text" placeholder="https://v0-web-app-logic.vercel.app/upload" />
+            </label>
+            <label>
+                <div class="subtle">Run intervals (hours)</div>
+                <div class="grid-2">
+                    <input id="phase1Hours" type="number" min="1" value="12" />
+                    <input id="phase2Hours" type="number" min="1" value="24" />
+                </div>
+                <div class="grid-2" style="margin-top:6px;">
+                    <span>Phase1</span>
+                    <span>Phase2/3</span>
+                </div>
+            </label>
+            <label>
+                <div class="subtle">Lưu link Điểm (mỗi dòng một link)</div>
+                <textarea id="settingsGradeUrls"></textarea>
+            </label>
+            <label>
+                <div class="subtle">Lưu link Điểm danh (mỗi dòng một link)</div>
+                <textarea id="settingsAttendanceUrls"></textarea>
+            </label>
+            <button id="saveSettingsBtn" class="full" style="background:#111;color:#fff;">Lưu cài đặt</button>
+            <div id="saveStatus" class="subtle"></div>
+        </div>
+    </details>
+
     <p id="status">Sẵn sàng để bắt đầu cào dữ liệu.</p>
 
 </body>

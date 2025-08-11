@@ -162,3 +162,66 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         statusDiv.textContent = `Đang cào điểm danh... (${message.current}/${message.total})`;
     }
 });
+
+// Settings: load on open
+const autoScrapeEnabledInput = document.getElementById('autoScrapeEnabled') as HTMLInputElement | null
+const autoUploadEnabledInput = document.getElementById('autoUploadEnabled') as HTMLInputElement | null
+const uploadTargetUrlInput = document.getElementById('uploadTargetUrl') as HTMLInputElement | null
+const phase1HoursInput = document.getElementById('phase1Hours') as HTMLInputElement | null
+const phase2HoursInput = document.getElementById('phase2Hours') as HTMLInputElement | null
+const settingsGradeUrls = document.getElementById('settingsGradeUrls') as HTMLTextAreaElement | null
+const settingsAttendanceUrls = document.getElementById('settingsAttendanceUrls') as HTMLTextAreaElement | null
+const saveSettingsBtn = document.getElementById('saveSettingsBtn') as HTMLButtonElement | null
+const saveStatus = document.getElementById('saveStatus') as HTMLDivElement | null
+
+function toMultiline(urls?: string[]): string { return (urls ?? []).join('\n') }
+function toArray(text?: string): string[] { return (text ?? '').split('\n').map(s => s.trim()).filter(Boolean) }
+
+if (autoScrapeEnabledInput && autoUploadEnabledInput && uploadTargetUrlInput) {
+  chrome.storage.sync.get([
+    'autoScrapeEnabled',
+    'autoUploadEnabled',
+    'uploadTargetUrl',
+    'runIntervals',
+    'gradeUrls',
+    'attendanceUrls',
+  ], (res) => {
+    autoScrapeEnabledInput.checked = Boolean(res.autoScrapeEnabled)
+    autoUploadEnabledInput.checked = Boolean(res.autoUploadEnabled)
+    uploadTargetUrlInput.value = res.uploadTargetUrl || 'https://v0-web-app-logic.vercel.app/upload'
+    const p1 = res.runIntervals?.phase1Hours ?? 12
+    const p23 = res.runIntervals?.phase2Hours ?? 24
+    if (phase1HoursInput) phase1HoursInput.value = String(p1)
+    if (phase2HoursInput) phase2HoursInput.value = String(p23)
+    if (settingsGradeUrls) settingsGradeUrls.value = toMultiline(res.gradeUrls)
+    if (settingsAttendanceUrls) settingsAttendanceUrls.value = toMultiline(res.attendanceUrls)
+  })
+}
+
+saveSettingsBtn?.addEventListener('click', () => {
+  const runIntervals = {
+    phase1Hours: Number(phase1HoursInput?.value || 12),
+    phase2Hours: Number(phase2HoursInput?.value || 24),
+    phase3Hours: Number(phase2HoursInput?.value || 24),
+  }
+
+  const payload = {
+    autoScrapeEnabled: Boolean(autoScrapeEnabledInput?.checked),
+    autoUploadEnabled: Boolean(autoUploadEnabledInput?.checked),
+    uploadTargetUrl: uploadTargetUrlInput?.value?.trim() || 'https://v0-web-app-logic.vercel.app/upload',
+    runIntervals,
+    gradeUrls: toArray(settingsGradeUrls?.value),
+    attendanceUrls: toArray(settingsAttendanceUrls?.value),
+  }
+
+  chrome.storage.sync.set(payload, () => {
+    if (chrome.runtime.lastError) {
+      if (saveStatus) saveStatus.textContent = `Lỗi: ${chrome.runtime.lastError.message}`
+      return
+    }
+    if (saveStatus) {
+      saveStatus.textContent = 'Đã lưu cài đặt!'
+      setTimeout(() => { if (saveStatus) saveStatus.textContent = '' }, 1500)
+    }
+  })
+})
