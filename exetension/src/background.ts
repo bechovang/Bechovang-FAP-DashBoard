@@ -857,3 +857,32 @@ async function scrapeAttendanceJSON(urls: string[]) {
         });
     }
 }
+
+// Initialize defaults on install/update
+chrome.runtime.onInstalled.addListener(async () => {
+  const defaults = {
+    autoScrapeEnabled: false,
+    autoUploadEnabled: false,
+    uploadTargetUrl: 'https://v0-web-app-logic.vercel.app/upload',
+    runIntervals: {
+      phase1Hours: 12,
+      phase2Hours: 24,
+      phase3Hours: 24,
+    },
+    gradeUrls: [] as string[],
+    attendanceUrls: [] as string[],
+  }
+
+  const current = await chrome.storage.sync.get(Object.keys(defaults))
+
+  const toSet: Record<string, any> = {}
+  for (const key of Object.keys(defaults) as (keyof typeof defaults)[]) {
+    if (current[key] === undefined) {
+      toSet[key as string] = defaults[key]
+    }
+  }
+
+  if (Object.keys(toSet).length) {
+    await chrome.storage.sync.set(toSet)
+  }
+});
